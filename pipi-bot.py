@@ -35,9 +35,12 @@ async def notify(ctx, use_timer=True):
     for vote in votes.values():
         if vote == 1:
             vote_ctr += 1
-
-    await ctx.send(f'/me {vote_ctr} Mensch(en) müssten mal')
-
+    if vote_ctr == 0
+        await ctx.send(f'/me Kein Mensch müsste mal')
+    elif vote_ctr == 1:
+        await ctx.send(f'/me {vote_ctr} Mensch müsste mal')
+    else:
+        await ctx.send(f'/me {vote_ctr} Menschen müssten mal')
 
 @bot.event
 async def event_ready():
