@@ -1,8 +1,8 @@
 import os
 import time
 
-from twitchio.ext import commands
 from dotenv import load_dotenv
+from twitchio.ext import commands
 
 load_dotenv()
 IRC_TOKEN = os.getenv("IRC_TOKEN")
