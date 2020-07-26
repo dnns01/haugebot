@@ -170,9 +170,6 @@ def vote(ctx, votetype):
     if vote_first == 0:
         vote_first = time.time()
 
-    # set time of last vote
-    vote_last = time.time()
-
     # new, changed or spam?
     if ctx.author.name in votes:
         if votes[ctx.author.name] == votetype:
@@ -181,10 +178,15 @@ def vote(ctx, votetype):
                 spammer[ctx.author.name] = spammer[ctx.author.name] + 1
             else:
                 spammer[ctx.author.name] = 1
+            # spammers dont' set vote_last, so they cannot extend the time a vote lasts.
         else:
             print('Vote changed: {} - {} -> {}'.format(ctx.author.name, votes[ctx.author.name], votetype))
+            # set time of last vote in case vote changed
+            vote_last = time.time()
     else:
         print('Vote added: {} - {}'.format(ctx.author.name, votetype))
+        # set time of last vote in case it is a new vote
+        vote_last = time.time()
 
     # add vote to dict
     votes[ctx.author.name] = votetype
