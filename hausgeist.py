@@ -51,11 +51,12 @@ async def notify(ctx, use_timer=True):
         if vote == 1:
             vote_ctr += 1
     if vote_ctr == 0:
-        await ctx.send(f'/me Kein Mensch müsste mal')
+        await ctx.send(f'/me Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!')
     elif vote_ctr == 1:
         await ctx.send(f'/me {vote_ctr} Mensch müsste mal')
     else:
         await ctx.send(f'/me {vote_ctr} Menschen müssten mal')
+
 
 @bot.event
 async def event_ready():
@@ -79,6 +80,15 @@ async def cmd_warpipi(ctx):
         await notify(ctx)
 
 
+@bot.command(name="zuspät")
+async def cmd_zuspaet(ctx):
+    """ User was not to toilet. Now it is too late. """
+
+    if ctx.author.name in pipi_votes and pipi_votes[ctx.author.name] == 1:
+        pipi_votes[ctx.author.name] = 0
+        await ctx.send(f'Für {ctx.author.name} ist es nun zu spät. {ctx.author.name} muss erst mal die Hose wechseln.')
+
+
 @bot.command(name="pause")
 async def cmd_pause(ctx):
     """ We will do a break now! """
@@ -88,6 +98,16 @@ async def cmd_pause(ctx):
     if ctx.author.is_mod:
         pipi_votes = {}
         await ctx.send("/me Pipipause!!!")
+
+
+@bot.command(name="reset")
+async def cmd_pause(ctx):
+    """ Reset pipi votes """
+
+    global pipi_votes
+
+    if ctx.author.is_mod:
+        pipi_votes = {}
 
 
 @bot.command(name="pipimeter")
@@ -121,25 +141,20 @@ async def event_message(ctx):
         if time.time() >= vote_last + VOTE_DELAY_END and vote_first != 0:
             # not enough votes?
             if len(votes) < VOTE_MIN_VOTES:
-                print('Not enough votes: {}'.format(len(votes)))
+                print(f'Not enough votes: {len(votes)}')
             else:
                 get_votes()
-                output = '/me Plus: {} ({}%) + Neutral: {} ({}%) - Minus: {} ({}%) ' \
-                         'Endergebnis nach {} Sekunden ohne neuen Vote.' \
-                         ' '.format(plus,
-                                    int(plus / len(votes) * 100),
-                                    neutral,
-                                    int(neutral / len(votes) * 100),
-                                    minus,
-                                    100-int(plus / len(votes) * 100)-int(neutral / len(votes) * 100),
-                                    VOTE_DELAY_END)
-            
+                output = f'/me Plus: {plus} ({int(plus / len(votes) * 100)}%) + ' \
+                         f'Neutral: {neutral} ({int(neutral / len(votes) * 100)}%) - ' \
+                         f'Minus: {minus} ({100 - int(plus / len(votes) * 100) - int(neutral / len(votes) * 100)}%) ' \
+                         f'Endergebnis nach {VOTE_DELAY_END} Sekunden ohne neuen Vote.'
+
                 # spammer_top = max(spammer, key=spammer.get)
                 # if spammer[spammer_top] >= 10:
                 #     output = output + '@{} ({}) hör auf zu spammen!'.format(spammer_top,
                 #                                                        spammer[spammer_top])
                 await ctx.channel.send(output)
-                print('Sending: {}'.format(output))
+                print(f'Sending: {output}')
 
             vote_first = 0
             vote_last = 0
@@ -150,7 +165,7 @@ async def event_message(ctx):
         if time.time() >= vote_first + VOTE_DELAY_INTERIM and vote_first != 0:
             # not enough votes?
             if len(votes) < VOTE_MIN_VOTES:
-                print('Not enough votes: {}'.format(len(votes)))
+                print(f'Not enough votes: {len(votes)}')
                 vote_first = 0
                 vote_last = 0
                 votes.clear()
@@ -158,18 +173,13 @@ async def event_message(ctx):
             else:
                 vote_first = time.time()
                 get_votes()
-                output = '/me Plus: {} ({}%) + Neutral: {} ({}%) - Minus: {} ({}%) ' \
-                         'Zwischenergebnis nach {} Sekunden durchgängige Votes.' \
-                         ' '.format(plus,
-                                    int(plus / len(votes) * 100),
-                                    neutral,
-                                    int(neutral / len(votes) * 100),
-                                    minus,
-                                    100-int(plus / len(votes) * 100)-int(neutral / len(votes) * 100),
-                                    VOTE_DELAY_INTERIM)
-                
+                output = f'/me Plus: {plus} ({int(plus / len(votes) * 100)}%) + ' \
+                         f'Neutral: {neutral} ({int(neutral / len(votes) * 100)}%) - ' \
+                         f'Minus: {minus} ({100 - int(plus / len(votes) * 100) - int(neutral / len(votes) * 100)}%) ' \
+                         f'Zwischenergebnis nach {VOTE_DELAY_INTERIM} Sekunden durchgängige Votes.' \
+ \
                 await ctx.channel.send(output)
-                print('Sending: {}'.format(output))
+                print(f'Sending: {output}')
 
 
 def vote(ctx, votetype):
@@ -183,18 +193,18 @@ def vote(ctx, votetype):
     # new, changed or spam?
     if ctx.author.name in votes:
         if votes[ctx.author.name] == votetype:
-            print('Vote spam: {} - {} -> {}'.format(ctx.author.name, votes[ctx.author.name], votetype))
+            print(f'Vote spam: {ctx.author.name} - {votes[ctx.author.name]} -> {votetype}')
             if ctx.author.name in spammer:
                 spammer[ctx.author.name] = spammer[ctx.author.name] + 1
             else:
                 spammer[ctx.author.name] = 1
             # spammers dont' set vote_last, so they cannot extend the time a vote lasts.
         else:
-            print('Vote changed: {} - {} -> {}'.format(ctx.author.name, votes[ctx.author.name], votetype))
+            print(f'Vote changed: {ctx.author.name} - {votes[ctx.author.name]} -> {votetype}')
             # set time of last vote in case vote changed
             vote_last = time.time()
     else:
-        print('Vote added: {} - {}'.format(ctx.author.name, votetype))
+        print(f'Vote added: {ctx.author.name} - {votetype}')
         # set time of last vote in case it is a new vote
         vote_last = time.time()
 

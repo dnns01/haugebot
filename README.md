@@ -20,8 +20,10 @@ Offers four commands to count the number of chat users who need to go to the toi
 
     !pipi -> To mention, that you need to go to the toilet
     !warpipi -> To mention, that you have been to the toilet before a break was announced
+    !zuspät -> Mention, that is now too late, and you had an accident
     !pipimeter -> Get the current count of users that need to go to toilet
     !pause -> Announce a break and reset the counter
+    !reset -> Resets all pipi-votes
 
 ### Installation
 
