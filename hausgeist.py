@@ -176,8 +176,8 @@ async def event_message(ctx):
                 output = f'/me Plus: {plus} ({int(plus / len(votes) * 100)}%) + ' \
                          f'Neutral: {neutral} ({int(neutral / len(votes) * 100)}%) - ' \
                          f'Minus: {minus} ({100 - int(plus / len(votes) * 100) - int(neutral / len(votes) * 100)}%) ' \
-                         f'Zwischenergebnis nach {VOTE_DELAY_INTERIM} Sekunden durchgängige Votes.' \
- \
+                         f'Zwischenergebnis nach {VOTE_DELAY_INTERIM} Sekunden durchgängige Votes.'
+                
                 await ctx.channel.send(output)
                 print(f'Sending: {output}')
 
