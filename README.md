@@ -43,8 +43,18 @@ as the `hausgeist.py` file. This file must look like this:
     
     # Pipi Bot
     PIPI_DELAY=<Delay in seconds as spam protection. This is the number of seconds between two chat announcements>
+    PIPI_THRESHOLD_1=<First Threshold. Used to change color and show, it is a bit more urgent>
+    PIPI_THRESHOLD_2=<Second Threshold. Used to change color and show, that it is really urgent>
+    PIPI_COLOR_0=<Neutral color used for !pause command, and if pipi vote counter is 0>
+    PIPI_COLOR_1=<Color used when pipi vote is at least one, and less than PIPI_THRESHOLD_1>
+    PIPI_COLOR_2=<Color used when pipi vote is at least PIPI_THRESHOLD_1, and less than PIPI_THRESHOLD_2>
+    PIPI_COLOR_3=<Color used when pipi vote is above PIPI_THRESHOLD_3>
     
     # Vote Bot
     VOTE_DELAY_END=<Number of seconds withoug a vote getting count. If this delay is reached, the vote is closed.>
     VOTE_DELAY_INTERIM=<Number of seconds between two announcements of the current vote count.>
     VOTE_MIN_VOTES=<Number of votes to be announced at all. A vote with less users votings will not be announced at all.>
+    VOTE_COLOR=<Chat Color that is used to announce voting results>
+    VOTE_PLUS=<Positive Chate Emote>
+    VOTE_MINUS=<Negative Chat Emote>
+    VOTE_NEUTRAL=<Neutral Chat Emote>

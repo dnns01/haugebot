@@ -12,6 +12,12 @@ PREFIX = os.getenv("PREFIX")
 
 # pipibot related
 PIPI_DELAY = int(os.getenv("PIPI_DELAY"))
+PIPI_THRESHOLD_1 = int(os.getenv("PIPI_THRESHOLD_1"))
+PIPI_THRESHOLD_2 = int(os.getenv("PIPI_THRESHOLD_2"))
+PIPI_COLOR_0 = os.getenv("PIPI_COLOR_0")
+PIPI_COLOR_1 = os.getenv("PIPI_COLOR_1")
+PIPI_COLOR_2 = os.getenv("PIPI_COLOR_2")
+PIPI_COLOR_3 = os.getenv("PIPI_COLOR_3")
 pipi_timer = 0
 pipi_votes = {}
 
@@ -19,13 +25,13 @@ pipi_votes = {}
 VOTE_DELAY_END = int(os.getenv("VOTE_DELAY_END"))
 VOTE_DELAY_INTERIM = int(os.getenv("VOTE_DELAY_INTERIM"))
 VOTE_MIN_VOTES = int(os.getenv("VOTE_MIN_VOTES"))
-plus = 0
-minus = 0
-neutral = 0
+VOTE_COLOR = int(os.getenv("VOTE_COLOR"))
+VOTE_PLUS = os.getenv("VOTE_PLUS")
+VOTE_MINUS = os.getenv("VOTE_MINUS")
+VOTE_NEUTRAL = os.getenv("VOTE_NEUTRAL")
 vote_first = 0
 vote_last = 0
 votes = {}
-spammer = {}
 
 bot = commands.Bot(
     irc_token=IRC_TOKEN,
@@ -35,7 +41,13 @@ bot = commands.Bot(
 )
 
 
-async def notify(ctx, use_timer=True, message=None):
+def get_percentage(part, total):
+    """ Calculate percentage """
+
+    return round(part / total * 100, 1)
+
+
+async def notify_pipi(ctx, use_timer=True, message=None):
     """ Write a message in chat, if there hasn't been a notification since PIPI_DELAY seconds. """
 
     global pipi_timer
@@ -49,17 +61,48 @@ async def notify(ctx, use_timer=True, message=None):
     chatters = await bot.get_chatters(CHANNEL)
 
     if message is not None:
+        await ctx.color(PIPI_COLOR_0)
         await ctx.send(message)
     else:
         for vote in pipi_votes.values():
             if vote == 1:
                 vote_ctr += 1
+
+        percentage = get_percentage(vote_ctr, chatters.count)
+
+        vote_ctr = 20
+
         if vote_ctr == 0:
-            await ctx.send(f'/me Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!')
+            await ctx.color(PIPI_COLOR_0)
+            await ctx.send_me(f'Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!')
         elif vote_ctr == 1:
-            await ctx.send(f'/me {vote_ctr} ({round(vote_ctr / chatters.count * 100, 1)}%) Mensch müsste mal')
+            await ctx.color(PIPI_COLOR_1)
+            await ctx.send_me(f'{vote_ctr} ({percentage}%) Mensch müsste mal')
+        elif vote_ctr < PIPI_THRESHOLD_1:
+            await ctx.color(PIPI_COLOR_1)
+            await ctx.send_me(f'{vote_ctr} ({percentage}%) Menschen müssten mal')
+        elif vote_ctr < PIPI_THRESHOLD_2:
+            await ctx.color(PIPI_COLOR_2)
+            await ctx.send_me(f'{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree')
         else:
-            await ctx.send(f'/me {vote_ctr} ({round(vote_ctr / chatters.count * 100, 1)}%) Menschen müssten mal')
+            await ctx.color(PIPI_COLOR_3)
+            await ctx.send_me(f'{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree haugeAgree')
+
+
+async def notify_vote_result(ctx, final_result=False):
+    votes_list = get_votes()
+
+    output = f'{VOTE_PLUS} {votes_list[0][0]} ({votes_list[0][1]}%), ' \
+             f'{VOTE_NEUTRAL} {votes_list[1][0]} ({votes_list[1][1]}%), ' \
+             f'{VOTE_MINUS} {votes_list[2][0]} ({votes_list[2][1]}%) | '
+
+    if final_result:
+        output += f'Endergebnis'
+    else:
+        output += f'Zwischenergebnis'
+
+    await ctx.channel.color(VOTE_COLOR)
+    await ctx.channel.send_me(output)
 
 
 @bot.event
@@ -72,7 +115,7 @@ async def cmd_pipi(ctx):
     """ User mentioned there is a need to go to toilet. """
 
     pipi_votes[ctx.author.name] = 1
-    await notify(ctx)
+    await notify_pipi(ctx)
 
 
 @bot.command(name="warpipi")
@@ -81,17 +124,14 @@ async def cmd_warpipi(ctx):
 
     if ctx.author.name in pipi_votes:
         pipi_votes[ctx.author.name] = 0
-        await notify(ctx)
+        await notify_pipi(ctx)
 
 
 @bot.command(name="zuspät")
 async def cmd_zuspaet(ctx):
-    """ User was not to toilet. Now it is too late. """
+    """ Alias to command "!warpipi" """
 
-    if ctx.author.name in pipi_votes and pipi_votes[ctx.author.name] == 1:
-        pipi_votes[ctx.author.name] = 0
-        await notify(ctx, use_timer=True,
-                     message=f'Für {ctx.author.name} ist es nun zu spät. {ctx.author.name} muss erst mal die Hose wechseln.')
+    await cmd_warpipi(ctx)
 
 
 @bot.command(name="pause")
@@ -102,7 +142,8 @@ async def cmd_pause(ctx):
 
     if ctx.author.is_mod:
         pipi_votes = {}
-        await ctx.send("/me Pipipause!!!")
+        await ctx.color(PIPI_COLOR_0)
+        await ctx.send_me("Jetzt geht noch mal jeder aufs Klo, und dann streamen wir weiter!")
 
 
 @bot.command(name="reset")
@@ -118,12 +159,12 @@ async def cmd_pause(ctx):
 @bot.command(name="pipimeter")
 async def cmd_pipimeter(ctx):
     if ctx.author.is_mod:
-        await notify(ctx, use_timer=False)
+        await notify_pipi(ctx, use_timer=False)
 
 
 @bot.event
 async def event_message(ctx):
-    global votes, vote_first, vote_last, spammer
+    global votes, vote_first, vote_last
 
     if ctx.content.startswith(PREFIX):
         await bot.handle_commands(ctx)
@@ -135,62 +176,34 @@ async def event_message(ctx):
 
         # check if message is a vote
         msg = ctx.content
-        if msg[:2] == '+-' or msg[:2] == '-+' or msg[:9] == 'haugeNeut':
-            vote(ctx, 'neutral')
-        elif msg[:1] == '+' or msg[:9] == 'haugePlus':
-            vote(ctx, 'plus')
-        elif msg[:1] == '-' or msg[:9] == 'haugeMinu':
-            vote(ctx, 'minus')
+        if msg[:2] == '+-' or msg[:2] == '-+' or msg[:len(VOTE_NEUTRAL)] == VOTE_NEUTRAL:
+            add_vote(ctx, 'neutral')
+        elif msg[:1] == '+' or msg[:len(VOTE_PLUS)] == VOTE_PLUS:
+            add_vote(ctx, 'plus')
+        elif msg[:1] == '-' or msg[:len(VOTE_MINUS)] == VOTE_MINUS:
+            add_vote(ctx, 'minus')
 
         # have X seconds passed since last vote? -> post end result
         if time.time() >= vote_last + VOTE_DELAY_END and vote_first != 0:
             # not enough votes?
-            if len(votes) < VOTE_MIN_VOTES:
-                print(f'Not enough votes: {len(votes)}')
-            else:
+            if len(votes) >= VOTE_MIN_VOTES:
                 get_votes()
-                output = f'/me Plus: {plus} ({round(plus / len(votes) * 100, 1)}%) + ' \
-                         f'Neutral: {neutral} ({round(neutral / len(votes) * 100, 1)}%) - ' \
-                         f'Minus: {minus} ({round(minus / len(votes) * 100, 1)}%) ' \
-                         f'Endergebnis nach {VOTE_DELAY_END} Sekunden ohne neuen Vote.'
-
-                # spammer_top = max(spammer, key=spammer.get)
-                # if spammer[spammer_top] >= 10:
-                #     output = output + '@{} ({}) hör auf zu spammen!'.format(spammer_top,
-                #                                                        spammer[spammer_top])
-                await ctx.channel.send(output)
-                print(f'Sending: {output}')
+                await notify_vote_result(ctx, final_result=True)
 
             vote_first = 0
             vote_last = 0
             votes.clear()
-            spammer.clear()
 
         # have X seconds passed since first vote? -> post interim result
         if time.time() >= vote_first + VOTE_DELAY_INTERIM and vote_first != 0:
-            # not enough votes?
-            if len(votes) < VOTE_MIN_VOTES:
-                print(f'Not enough votes: {len(votes)}')
-                vote_first = 0
-                vote_last = 0
-                votes.clear()
-                spammer.clear()
-
-            else:
+            if len(votes) >= VOTE_MIN_VOTES:
                 vote_first = time.time()
-                get_votes()
-                output = f'/me Plus: {plus} ({round(plus / len(votes) * 100, 1)}%) + ' \
-                         f'Neutral: {neutral} ({round(neutral / len(votes) * 100, 1)}%) - ' \
-                         f'Minus: {minus} ({round(minus / len(votes) * 100, 1)}%) ' \
-                         f'Zwischenergebnis nach {VOTE_DELAY_INTERIM} Sekunden durchgängige Votes.'
-
-                await ctx.channel.send(output)
-                print(f'Sending: {output}')
+                await notify_vote_result(ctx)
 
 
-def vote(ctx, votetype):
+def add_vote(ctx, votetype):
     """adds votes to the votes-dict and sets timestamps"""
-    global votes, vote_first, vote_last, spammer
+    global votes, vote_first, vote_last
 
     # is this the first vote?
     if vote_first == 0:
@@ -198,19 +211,11 @@ def vote(ctx, votetype):
 
     # new, changed or spam?
     if ctx.author.name in votes:
-        if votes[ctx.author.name] == votetype:
-            print(f'Vote spam: {ctx.author.name} - {votes[ctx.author.name]} -> {votetype}')
-            if ctx.author.name in spammer:
-                spammer[ctx.author.name] = spammer[ctx.author.name] + 1
-            else:
-                spammer[ctx.author.name] = 1
-            # spammers dont' set vote_last, so they cannot extend the time a vote lasts.
-        else:
-            print(f'Vote changed: {ctx.author.name} - {votes[ctx.author.name]} -> {votetype}')
-            # set time of last vote in case vote changed
+        if votes[ctx.author.name] != votetype:
+            # Vote changed
             vote_last = time.time()
     else:
-        print(f'Vote added: {ctx.author.name} - {votetype}')
+        # new vote
         # set time of last vote in case it is a new vote
         vote_last = time.time()
 
@@ -220,9 +225,6 @@ def vote(ctx, votetype):
 
 def get_votes():
     """analyzes the votes-dict and counts the votes"""
-    global plus, minus, neutral
-
-    # reset global vars
     plus = 0
     minus = 0
     neutral = 0
@@ -235,6 +237,10 @@ def get_votes():
             plus += 1
         elif x == 'minus':
             minus += 1
+
+    return [[plus, get_percentage(plus, len(votes))],
+            [neutral, get_percentage(neutral, len(votes))],
+            [minus, get_percentage(minus, len(votes))]]
 
 
 bot.run()
