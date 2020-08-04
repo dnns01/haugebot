@@ -35,7 +35,7 @@ bot = commands.Bot(
 )
 
 
-async def notify(ctx, use_timer=True):
+async def notify(ctx, use_timer=True, message=None):
     """ Write a message in chat, if there hasn't been a notification since PIPI_DELAY seconds. """
 
     global pipi_timer
@@ -46,16 +46,20 @@ async def notify(ctx, use_timer=True):
 
     pipi_timer = timestamp
     vote_ctr = 0
+    chatters = await bot.get_chatters(CHANNEL)
 
-    for vote in pipi_votes.values():
-        if vote == 1:
-            vote_ctr += 1
-    if vote_ctr == 0:
-        await ctx.send(f'/me Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!')
-    elif vote_ctr == 1:
-        await ctx.send(f'/me {vote_ctr} Mensch müsste mal')
+    if message is not None:
+        await ctx.send(message)
     else:
-        await ctx.send(f'/me {vote_ctr} Menschen müssten mal')
+        for vote in pipi_votes.values():
+            if vote == 1:
+                vote_ctr += 1
+        if vote_ctr == 0:
+            await ctx.send(f'/me Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!')
+        elif vote_ctr == 1:
+            await ctx.send(f'/me {vote_ctr} ({round(vote_ctr / chatters.count * 100, 1)}%) Mensch müsste mal')
+        else:
+            await ctx.send(f'/me {vote_ctr} ({round(vote_ctr / chatters.count * 100, 1)}%) Menschen müssten mal')
 
 
 @bot.event
@@ -86,7 +90,8 @@ async def cmd_zuspaet(ctx):
 
     if ctx.author.name in pipi_votes and pipi_votes[ctx.author.name] == 1:
         pipi_votes[ctx.author.name] = 0
-        await ctx.send(f'Für {ctx.author.name} ist es nun zu spät. {ctx.author.name} muss erst mal die Hose wechseln.')
+        await notify(ctx, use_timer=True,
+                     message=f'Für {ctx.author.name} ist es nun zu spät. {ctx.author.name} muss erst mal die Hose wechseln.')
 
 
 @bot.command(name="pause")
@@ -144,9 +149,9 @@ async def event_message(ctx):
                 print(f'Not enough votes: {len(votes)}')
             else:
                 get_votes()
-                output = f'/me Plus: {plus} ({int(plus / len(votes) * 100)}%) + ' \
-                         f'Neutral: {neutral} ({int(neutral / len(votes) * 100)}%) - ' \
-                         f'Minus: {minus} ({100 - int(plus / len(votes) * 100) - int(neutral / len(votes) * 100)}%) ' \
+                output = f'/me Plus: {plus} ({round(plus / len(votes) * 100, 1)}%) + ' \
+                         f'Neutral: {neutral} ({round(neutral / len(votes) * 100, 1)}%) - ' \
+                         f'Minus: {minus} ({round(minus / len(votes) * 100, 1)}%) ' \
                          f'Endergebnis nach {VOTE_DELAY_END} Sekunden ohne neuen Vote.'
 
                 # spammer_top = max(spammer, key=spammer.get)
@@ -170,14 +175,15 @@ async def event_message(ctx):
                 vote_last = 0
                 votes.clear()
                 spammer.clear()
+
             else:
                 vote_first = time.time()
                 get_votes()
-                output = f'/me Plus: {plus} ({int(plus / len(votes) * 100)}%) + ' \
-                         f'Neutral: {neutral} ({int(neutral / len(votes) * 100)}%) - ' \
-                         f'Minus: {minus} ({100 - int(plus / len(votes) * 100) - int(neutral / len(votes) * 100)}%) ' \
+                output = f'/me Plus: {plus} ({round(plus / len(votes) * 100, 1)}%) + ' \
+                         f'Neutral: {neutral} ({round(neutral / len(votes) * 100, 1)}%) - ' \
+                         f'Minus: {minus} ({round(minus / len(votes) * 100, 1)}%) ' \
                          f'Zwischenergebnis nach {VOTE_DELAY_INTERIM} Sekunden durchgängige Votes.'
-                
+
                 await ctx.channel.send(output)
                 print(f'Sending: {output}')
 
