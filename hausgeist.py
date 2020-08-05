@@ -209,14 +209,8 @@ def add_vote(ctx, votetype):
     if vote_first == 0:
         vote_first = time.time()
 
-    # new, changed or spam?
-    if ctx.author.name in votes:
-        if votes[ctx.author.name] != votetype:
-            # Vote changed
-            vote_last = time.time()
-    else:
-        # new vote
-        # set time of last vote in case it is a new vote
+    # should vote count as last (=newest) vote?
+    if ctx.author.name not in votes or votes[ctx.author.name] != votetype:
         vote_last = time.time()
 
     # add vote to dict
