@@ -176,7 +176,7 @@ async def event_message(ctx):
 
         # check if message is a vote
         msg = ctx.content
-        if msg[:2] == '+-' or msg[:2] == '-+' or msg[:len(VOTE_NEUTRAL)] == VOTE_NEUTRAL:
+        if msg[:2] == '+-' or msg[:2] == '-+' or msg[:3] == '-/+' or msg[:3] == '+/-' or msg[:len(VOTE_NEUTRAL)] == VOTE_NEUTRAL:
             add_vote(ctx, 'neutral')
         elif msg[:1] == '+' or msg[:len(VOTE_PLUS)] == VOTE_PLUS:
             add_vote(ctx, 'plus')
