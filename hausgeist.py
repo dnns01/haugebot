@@ -233,8 +233,8 @@ async def vote_end_voting(channel):
     while int(vote_end_task.get_name()) + VOTE_DELAY_END >= time.time():
         await asyncio.sleep(1)
 
-    # if len(votes) >= VOTE_MIN_VOTES:
-    await notify_vote_result(channel, final_result=True)
+    if len(votes) >= VOTE_MIN_VOTES:
+        await notify_vote_result(channel, final_result=True)
 
     votes.clear()
 
