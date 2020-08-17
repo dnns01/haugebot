@@ -5,9 +5,11 @@ This Twitch Bot offers two different usages.
 
 Checks every chat message for the following beginnings:
 
-    +- / -+ / haugeNeut -> Neutral
-    + / haugePlus -> Plus
-    - / haugeMinu -> Minus
+results in | trigger
+--- | ---
+neutral | `+-` `-+` `+/-` `-/+` `haugeNeut`  
+plus | `+` `haugePlus`  
+minus | `-` `haugeMinu`  
 
 Posts an interim result every 20 seconds and an end result after 5 seconds of no additional votes.
 
@@ -58,3 +60,9 @@ as the `hausgeist.py` file. This file must look like this:
     VOTE_PLUS=<Positive Chate Emote>
     VOTE_MINUS=<Negative Chat Emote>
     VOTE_NEUTRAL=<Neutral Chat Emote>
+    
+    # Redis Server
+    REDIS_HOST=<IP of the Redis-Server>
+    REDIS_PORT=<Port of the Redis-Server>
+    REDIS_DB=<Index of the Database>
+    REDIS_PW=<Password for the Redis-Server>
