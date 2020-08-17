@@ -1,6 +1,7 @@
 import asyncio
 import os
 import time
+import redis
 
 from dotenv import load_dotenv
 from twitchio.dataclasses import Context, Message, Channel
@@ -41,6 +42,41 @@ bot = commands.Bot(
     nick=NICK,
     initial_channels=[CHANNEL]
 )
+
+#redis-server related
+R_HOST = os.getenv("REDIS_HOST")
+R_PORT = os.getenv("REDIS_PORT")
+R_DB = os.getenv("REDIS_DB")
+R_PW = os.getenv("REDIS_PW")
+
+useRedis = False
+
+# try to connect
+try:
+    r = redis.Redis(host=R_HOST, port=R_PORT, db=R_DB, password=R_PW)
+    print(r)
+    r.ping()
+    useRedis = True
+    print('Redis: Connected!')
+except Exception as ex:
+    print('A connection to the Redis server could not be established. Redis querys are avoided.')
+
+
+if useRedis:
+    # update constants in Redis-DB
+    r.set('pipiDelay', PIPI_DELAY)
+    r.set('pipiT1', PIPI_THRESHOLD_1)
+    r.set('pipiT2', PIPI_THRESHOLD_2)
+    r.set('voteMin', VOTE_MIN_VOTES)
+    r.set('voteDelayEnd', VOTE_DELAY_END)
+    r.set('voteDelayInter', VOTE_DELAY_INTERIM)
+
+    # reset DB
+    p = r.pipeline() # start transaction
+    p.set('plus', 0)
+    p.set('neutral', 0)
+    p.set('minus', 0)
+    p.execute() # transaction end
 
 
 def get_percentage(part, total):
@@ -185,6 +221,9 @@ async def event_message(message):
         elif msg[:1] == '-' or msg[:len(VOTE_MINUS)] == VOTE_MINUS:
             add_vote(message, 'minus')
 
+        if useRedis:
+            # update redis-database
+            update_redis()
 
 def add_vote(ctx, votetype):
     """adds votes to the votes-dict and sets timestamps"""
@@ -201,6 +240,31 @@ def add_vote(ctx, votetype):
     # add vote to dict
     votes[ctx.author.name] = votetype
 
+    if useRedis:
+        # update redis-database
+        update_redis()
+
+def update_redis():
+    """analyzes the votes-dict and counts the votes"""
+    plus = 0
+    minus = 0
+    neutral = 0
+
+    # count values in dict
+    for x in votes.values():
+        if x == 'neutral':
+            neutral += 1
+        elif x == 'plus':
+            plus += 1
+        elif x == 'minus':
+            minus += 1
+
+    if useRedis:
+        p = r.pipeline() # start transaction
+        p.set('plus', plus)
+        p.set('neutral', neutral)
+        p.set('minus', minus)
+        p.execute() # transaction end
 
 def get_votes():
     """analyzes the votes-dict and counts the votes"""
@@ -238,6 +302,9 @@ async def vote_end_voting(channel):
 
     votes.clear()
 
+    if useRedis:
+        # update redis-database
+        update_redis()
 
 async def vote_interim_voting(channel):
     """ End a currently open voting """
@@ -249,6 +316,9 @@ async def vote_interim_voting(channel):
         await notify_vote_result(channel)
         vote_interim_task = asyncio.create_task(vote_interim_voting(bot.get_channel(CHANNEL)))
 
+    if useRedis:
+        # update redis-database
+        update_redis()
 
 async def pipi_block_notification():
     """ Just do nothing but sleep for PIPI_DELAY seconds """
