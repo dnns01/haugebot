@@ -130,6 +130,7 @@ async def notify_vote_result(message, final_result=False):
              f'{VOTE_NEUTRAL} {votes_list[1][0]} ({votes_list[1][1]}%), ' \
              f'{VOTE_MINUS} {votes_list[2][0]} ({votes_list[2][1]}%) | '
     output += f'Endergebnis' if final_result else f'Zwischenergebnis'
+    output += f' mit insgesamt {len(votes)} abgegebenen Stimmen'
 
     await send_me(message, output, VOTE_COLOR)
 
