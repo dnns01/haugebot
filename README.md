@@ -7,9 +7,9 @@ Checks every chat message for the following beginnings:
 
 results in | trigger
 --- | ---
-neutral | `+-` `-+` `+/-` `-/+` `haugeNeut`  
+neutral | `+-` `-+` `+/-` `-/+` `haugeNeutral`  
 plus | `+` `haugePlus`  
-minus | `-` `haugeMinu`  
+minus | `-` `haugeMinus`  
 
 Posts an interim result every 20 seconds and an end result after 5 seconds of no additional votes.
 
@@ -54,7 +54,7 @@ as the `hausgeist.py` file. This file must look like this:
     
     # Vote Bot
     VOTE_DELAY_END=<Number of seconds withoug a vote getting count. If this delay is reached, the vote is closed.>
-    VOTE_DELAY_INTERIM=<Number of seconds between two announcements of the current vote count.>
+    VOTE_DELAY_INTERIM=<Number of seconds between two announcements of the current vote count. Also used as delay between two votes.>
     VOTE_MIN_VOTES=<Number of votes to be announced at all. A vote with less users votings will not be announced at all.>
     VOTE_COLOR=<Chat Color that is used to announce voting results>
     VOTE_PLUS=<Positive Chate Emote>

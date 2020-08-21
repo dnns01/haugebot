@@ -1,8 +1,8 @@
 import asyncio
 import os
 import time
-import redis
 
+import redis
 from dotenv import load_dotenv
 from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
@@ -34,6 +34,7 @@ VOTE_MINUS = os.getenv("VOTE_MINUS")
 VOTE_NEUTRAL = os.getenv("VOTE_NEUTRAL")
 vote_end_task = None
 vote_interim_task = None
+vote_task_new = None
 votes = {}
 
 bot = commands.Bot(
@@ -43,7 +44,7 @@ bot = commands.Bot(
     initial_channels=[CHANNEL]
 )
 
-#redis-server related
+# redis-server related
 R_HOST = os.getenv("REDIS_HOST")
 R_PORT = os.getenv("REDIS_PORT")
 R_DB = os.getenv("REDIS_DB")
@@ -52,6 +53,7 @@ R_PW = os.getenv("REDIS_PW")
 useRedis = False
 
 # try to connect
+r = None
 try:
     r = redis.Redis(host=R_HOST, port=R_PORT, db=R_DB, password=R_PW)
     print(r)
@@ -61,8 +63,7 @@ try:
 except Exception as ex:
     print('A connection to the Redis server could not be established. Redis querys are avoided.')
 
-
-if useRedis:
+if useRedis and r:
     # update constants in Redis-DB
     r.set('pipiDelay', PIPI_DELAY)
     r.set('pipiT1', PIPI_THRESHOLD_1)
@@ -72,11 +73,11 @@ if useRedis:
     r.set('voteDelayInter', VOTE_DELAY_INTERIM)
 
     # reset DB
-    p = r.pipeline() # start transaction
+    p = r.pipeline()  # start transaction
     p.set('plus', 0)
     p.set('neutral', 0)
     p.set('minus', 0)
-    p.execute() # transaction end
+    p.execute()  # transaction end
 
 
 def get_percentage(part, total):
@@ -142,6 +143,7 @@ async def send_me(ctx, content, color):
     elif type(ctx) is Message:
         await ctx.channel.color(color)
         await ctx.channel.send_me(content)
+
 
 @bot.event
 async def event_ready():
@@ -225,9 +227,14 @@ async def event_message(message):
             # update redis-database
             update_redis()
 
+
 def add_vote(ctx, votetype):
     """adds votes to the votes-dict and sets timestamps"""
     global votes, vote_end_task, vote_interim_task
+
+    # Delay between two votes is not yet finished. So votes are not counted.
+    if vote_task_new and not vote_task_new.done():
+        return
 
     if len(votes) == 0:
         vote_end_task = asyncio.create_task(vote_end_voting(bot.get_channel(CHANNEL)))
@@ -243,6 +250,7 @@ def add_vote(ctx, votetype):
     if useRedis:
         # update redis-database
         update_redis()
+
 
 def update_redis():
     """analyzes the votes-dict and counts the votes"""
@@ -260,11 +268,12 @@ def update_redis():
             minus += 1
 
     if useRedis:
-        p = r.pipeline() # start transaction
+        p = r.pipeline()  # start transaction
         p.set('plus', plus)
         p.set('neutral', neutral)
         p.set('minus', minus)
-        p.execute() # transaction end
+        p.execute()  # transaction end
+
 
 def get_votes():
     """analyzes the votes-dict and counts the votes"""
@@ -289,6 +298,8 @@ def get_votes():
 async def vote_end_voting(channel):
     """ End a currently open voting """
 
+    global vote_task_new
+
     # Wait for the initial VOTE_DELAY_END seconds
     await asyncio.sleep(VOTE_DELAY_END)
 
@@ -301,10 +312,12 @@ async def vote_end_voting(channel):
         await notify_vote_result(channel, final_result=True)
 
     votes.clear()
+    vote_task_new = asyncio.create_task(vote_block_votes())
 
     if useRedis:
         # update redis-database
         update_redis()
+
 
 async def vote_interim_voting(channel):
     """ End a currently open voting """
@@ -319,6 +332,13 @@ async def vote_interim_voting(channel):
     if useRedis:
         # update redis-database
         update_redis()
+
+
+async def vote_block_votes():
+    """ Just do nothing but sleep for VOTE_DELAY_INTERIM seconds """
+
+    await asyncio.sleep(VOTE_DELAY_INTERIM)
+
 
 async def pipi_block_notification():
     """ Just do nothing but sleep for PIPI_DELAY seconds """
