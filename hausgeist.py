@@ -159,20 +159,13 @@ async def cmd_pipi(ctx):
     await notify_pipi(ctx)
 
 
-@bot.command(name="warpipi")
+@bot.command(name="warpipi", aliases=["zuspät"])
 async def cmd_warpipi(ctx):
     """ User already went to toilet. """
 
     if ctx.author.name in pipi_votes:
         pipi_votes[ctx.author.name] = 0
         await notify_pipi(ctx)
-
-
-@bot.command(name="zuspät")
-async def cmd_zuspaet(ctx):
-    """ Alias to command "!warpipi" """
-
-    await cmd_warpipi(ctx)
 
 
 @bot.command(name="pause")
