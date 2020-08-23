@@ -151,7 +151,7 @@ async def event_ready():
     print('Logged in')
 
 
-@bot.command(name="pipi")
+@bot.command(name="pipi", aliases=["Pipi"])
 async def cmd_pipi(ctx):
     """ User mentioned there is a need to go to toilet. """
 
@@ -159,7 +159,7 @@ async def cmd_pipi(ctx):
     await notify_pipi(ctx)
 
 
-@bot.command(name="warpipi", aliases=["zuspät"])
+@bot.command(name="warpipi", aliases=["Warpipi", "zuspät", "Zuspät"])
 async def cmd_warpipi(ctx):
     """ User already went to toilet. """
 
@@ -168,7 +168,7 @@ async def cmd_warpipi(ctx):
         await notify_pipi(ctx)
 
 
-@bot.command(name="pause")
+@bot.command(name="pause", aliases=["Pause"])
 async def cmd_pause(ctx):
     """ We will do a break now! """
 
@@ -179,7 +179,7 @@ async def cmd_pause(ctx):
         await send_me(ctx, "Jetzt geht noch mal jeder aufs Klo, und dann streamen wir weiter!", PIPI_COLOR_0)
 
 
-@bot.command(name="reset")
+@bot.command(name="reset", aliases=["Reset"])
 async def cmd_pause(ctx):
     """ Reset pipi votes """
 
@@ -189,7 +189,7 @@ async def cmd_pause(ctx):
         pipi_votes = {}
 
 
-@bot.command(name="pipimeter")
+@bot.command(name="pipimeter", aliases=["Pipimeter"])
 async def cmd_pipimeter(ctx):
     if ctx.author.is_mod:
         await notify_pipi(ctx, use_timer=False)
