@@ -3,6 +3,7 @@ import os
 import time
 
 import redis
+import random
 from dotenv import load_dotenv
 from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
@@ -36,6 +37,10 @@ vote_end_task = None
 vote_interim_task = None
 vote_task_new = None
 votes = {}
+
+# giveaway bot related
+giveaway_enabled = False
+giveaway_entries = {}
 
 bot = commands.Bot(
     irc_token=IRC_TOKEN,
@@ -338,6 +343,80 @@ async def pipi_block_notification():
     """ Just do nothing but sleep for PIPI_DELAY seconds """
 
     await asyncio.sleep(PIPI_DELAY)
+@bot.command(name="giveaway")
+async def cmd_giveaway(ctx):
+    """ take part at the giveaway """
+
+    global giveaway_entries
+    global giveaway_enabled
+
+    if giveaway_enabled:
+        giveaway_entries[ctx.author.name] = 1
+
+
+@bot.command(name="giveaway-open")
+async def cmd_giveawayopen(ctx):
+    """ Reset and Open the giveaway """
+
+    global giveaway_entries
+    global giveaway_enabled
+
+    if ctx.author.is_mod:
+        giveaway_enabled = True
+        giveaway_entries = {}
+        await send_me(ctx, "Das Giveaway wurde gestartet. Schreibe !giveaway in den Chat um daran teilzunehmen.", VOTE_COLOR)
+
+@bot.command(name="giveaway-reopen")
+async def cmd_giveawayopen(ctx):
+    """ Reopen the giveaway after closing it (so reset) """
+
+    global giveaway_enabled
+
+    if ctx.author.is_mod:
+        giveaway_enabled = True
+        await send_me(ctx, "Das Giveaway wurde wieder geöffnet. Schreibe !giveaway in den Chat um daran teilzunehmen.", VOTE_COLOR)
+
+
+@bot.command(name="giveaway-close")
+async def cmd_giveawayopen(ctx):
+    """ Close the giveaway """
+
+    global giveaway_entries
+    global giveaway_enabled
+
+    if ctx.author.is_mod:
+        giveaway_enabled = False
+        await send_me(ctx, "Das Giveaway wurde geschlossen. Es kann niemand mehr teilnehmen.", VOTE_COLOR)
+
+
+@bot.command(name="giveaway-draw")
+async def cmd_giveawaydraw(ctx):
+    """ Draw a giveaway winner """
+
+    global giveaway_entries
+
+    if ctx.author.is_mod:
+        if len(giveaway_entries) > 0:
+            winner = random.choice(list(giveaway_entries))
+            entry_count = len(giveaway_entries)
+            del giveaway_entries[winner]
+            await send_me(ctx, f"Es wurde aus {entry_count} Einträgen ausgelost. Und der Gewinner ist... @{winner}", VOTE_COLOR)
+            #await send_me(ctx, f"{giveaway_entries}", VOTE_COLOR)
+        else:
+            await send_me(ctx, "Es muss Einträge geben, damit ein Gewinner gezogen werden kann.", VOTE_COLOR)
+       
+
+@bot.command(name="giveaway-reset")
+async def cmd_giveawayreset(ctx):
+    """ Reset giveaway entrys """
+
+    global giveaway_entries
+    global giveaway_enabled
+
+    if ctx.author.is_mod:
+        giveaway_enabled = False
+        giveaway_entries = {}
+        await send_me(ctx, "Das Giveaway wurde geschlossen und alle Einträge entfernt.", VOTE_COLOR)
 
 
 bot.run()
