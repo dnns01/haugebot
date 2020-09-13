@@ -401,7 +401,6 @@ async def cmd_giveawaydraw(ctx):
             entry_count = len(giveaway_entries)
             del giveaway_entries[winner]
             await send_me(ctx, f"Es wurde aus {entry_count} Einträgen ausgelost. Und der Gewinner ist... @{winner}", VOTE_COLOR)
-            #await send_me(ctx, f"{giveaway_entries}", VOTE_COLOR)
         else:
             await send_me(ctx, "Es muss Einträge geben, damit ein Gewinner gezogen werden kann.", VOTE_COLOR)
        
