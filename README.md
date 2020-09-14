@@ -18,14 +18,26 @@ Checks if more than 10 votes have been added before posting any result.
 
 ### Pipi Bot
 
-Offers four commands to count the number of chat users who need to go to the toilet.
+Offers commands to count the number of chat users who need to go to the toilet.
 
     !pipi -> To mention, that you need to go to the toilet
     !warpipi -> To mention, that you have been to the toilet before a break was announced
     !zuspät -> Mention, that is now too late, and you had an accident
-    !pipimeter -> Get the current count of users that need to go to toilet
-    !pause -> Announce a break and reset the counter
-    !reset -> Resets all pipi-votes
+    !pipimeter [mod-only] -> Get the current count of users that need to go to toilet
+    !pause [mod-only] -> Announce a break and reset the counter
+    !reset [mod-only] -> Resets all pipi-votes
+    
+### Giveaway Bot
+
+Offers some commands to control a giveaway:
+
+    !giveaway-open [mod-only] -> Resets the entry-list and open the giveaway
+    !giveaway-close [mod-only] -> Close the giveaway - from now nobody can enter
+    !giveaway-reopen [mod-only] -> Open the giveaway without resetting the entrylist
+    !giveaway-draw [mod-only] -> Draw a winner and remove them from the list of participants
+    !giveaway-reset [mod-only] -> Clear the entry-list
+    !giveaway -> take part at the giveaway
+
 
 ### Installation
 
