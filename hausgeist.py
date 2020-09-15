@@ -1,6 +1,7 @@
 import asyncio
 import os
 import time
+from typing import Final, Text, Optional, Union, Dict, Tuple
 
 import redis
 import random
@@ -9,30 +10,30 @@ from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
 
 load_dotenv()
-IRC_TOKEN = os.getenv("IRC_TOKEN")
-NICK = os.getenv("NICK")
-CHANNEL = os.getenv("CHANNEL")
-PREFIX = os.getenv("PREFIX")
+IRC_TOKEN: Final[Text] = os.getenv("IRC_TOKEN")
+NICK: Final[Text] = os.getenv("NICK")
+CHANNEL: Final[Text] = os.getenv("CHANNEL")
+PREFIX: Final[Text] = os.getenv("PREFIX")
 
 # pipibot related
-PIPI_DELAY = int(os.getenv("PIPI_DELAY"))
-PIPI_THRESHOLD_1 = int(os.getenv("PIPI_THRESHOLD_1"))
-PIPI_THRESHOLD_2 = int(os.getenv("PIPI_THRESHOLD_2"))
-PIPI_COLOR_0 = os.getenv("PIPI_COLOR_0")
-PIPI_COLOR_1 = os.getenv("PIPI_COLOR_1")
-PIPI_COLOR_2 = os.getenv("PIPI_COLOR_2")
-PIPI_COLOR_3 = os.getenv("PIPI_COLOR_3")
+PIPI_DELAY: Final[int] = int(os.getenv("PIPI_DELAY"))
+PIPI_THRESHOLD_1: Final[int] = int(os.getenv("PIPI_THRESHOLD_1"))
+PIPI_THRESHOLD_2: Final[int] = int(os.getenv("PIPI_THRESHOLD_2"))
+PIPI_COLOR_0: Final[Text] = os.getenv("PIPI_COLOR_0")
+PIPI_COLOR_1: Final[Text] = os.getenv("PIPI_COLOR_1")
+PIPI_COLOR_2: Final[Text] = os.getenv("PIPI_COLOR_2")
+PIPI_COLOR_3: Final[Text] = os.getenv("PIPI_COLOR_3")
 pipi_task = None
 pipi_votes = {}
 
 # vote bot related
-VOTE_DELAY_END = int(os.getenv("VOTE_DELAY_END"))
-VOTE_DELAY_INTERIM = int(os.getenv("VOTE_DELAY_INTERIM"))
-VOTE_MIN_VOTES = int(os.getenv("VOTE_MIN_VOTES"))
-VOTE_COLOR = os.getenv("VOTE_COLOR")
-VOTE_PLUS = os.getenv("VOTE_PLUS")
-VOTE_MINUS = os.getenv("VOTE_MINUS")
-VOTE_NEUTRAL = os.getenv("VOTE_NEUTRAL")
+VOTE_DELAY_END: Final[int] = int(os.getenv("VOTE_DELAY_END"))
+VOTE_DELAY_INTERIM: Final[int] = int(os.getenv("VOTE_DELAY_INTERIM"))
+VOTE_MIN_VOTES: Final[int] = int(os.getenv("VOTE_MIN_VOTES"))
+VOTE_COLOR: Final[Text] = os.getenv("VOTE_COLOR")
+VOTE_PLUS: Final[Text] = os.getenv("VOTE_PLUS")
+VOTE_MINUS: Final[Text] = os.getenv("VOTE_MINUS")
+VOTE_NEUTRAL: Final[Text] = os.getenv("VOTE_NEUTRAL")
 vote_end_task = None
 vote_interim_task = None
 vote_task_new = None
@@ -43,10 +44,7 @@ giveaway_enabled = False
 giveaway_entries = {}
 
 bot = commands.Bot(
-    irc_token=IRC_TOKEN,
-    prefix=PREFIX,
-    nick=NICK,
-    initial_channels=[CHANNEL]
+    irc_token=IRC_TOKEN, prefix=PREFIX, nick=NICK, initial_channels=[CHANNEL]
 )
 
 # redis-server related
@@ -64,34 +62,39 @@ try:
     print(r)
     r.ping()
     useRedis = True
-    print('Redis: Connected!')
+    print("Redis: Connected!")
 except Exception as ex:
-    print('A connection to the Redis server could not be established. Redis querys are avoided.')
+    print(
+        "A connection to the Redis server could not be established: %s\nRedis querys are avoided.",
+        ex,
+    )
 
 if useRedis and r:
     # update constants in Redis-DB
-    r.set('pipiDelay', PIPI_DELAY)
-    r.set('pipiT1', PIPI_THRESHOLD_1)
-    r.set('pipiT2', PIPI_THRESHOLD_2)
-    r.set('voteMin', VOTE_MIN_VOTES)
-    r.set('voteDelayEnd', VOTE_DELAY_END)
-    r.set('voteDelayInter', VOTE_DELAY_INTERIM)
+    r.set("pipiDelay", PIPI_DELAY)
+    r.set("pipiT1", PIPI_THRESHOLD_1)
+    r.set("pipiT2", PIPI_THRESHOLD_2)
+    r.set("voteMin", VOTE_MIN_VOTES)
+    r.set("voteDelayEnd", VOTE_DELAY_END)
+    r.set("voteDelayInter", VOTE_DELAY_INTERIM)
 
     # reset DB
     p = r.pipeline()  # start transaction
-    p.set('plus', 0)
-    p.set('neutral', 0)
-    p.set('minus', 0)
+    p.set("plus", 0)
+    p.set("neutral", 0)
+    p.set("minus", 0)
     p.execute()  # transaction end
 
 
-def get_percentage(part, total):
+def get_percentage(part: int, total: int) -> float:
     """ Calculate percentage """
 
     return round(part / total * 100, 1)
 
 
-async def notify_pipi(ctx, use_timer=True, message=None):
+async def notify_pipi(
+    ctx: Context, use_timer: bool = True, message: Optional[Text] = None
+):
     """ Write a message in chat, if there hasn't been a notification since PIPI_DELAY seconds. """
 
     global pipi_task
@@ -116,31 +119,48 @@ async def notify_pipi(ctx, use_timer=True, message=None):
         percentage = get_percentage(vote_ctr, chatters.count)
 
         if vote_ctr == 0:
-            await send_me(ctx, f'Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!',
-                          PIPI_COLOR_0)
+            await send_me(
+                ctx,
+                "Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!",
+                PIPI_COLOR_0,
+            )
         elif vote_ctr == 1:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Mensch müsste mal', PIPI_COLOR_1)
+            await send_me(
+                ctx, f"{vote_ctr} ({percentage}%) Mensch müsste mal", PIPI_COLOR_1
+            )
         elif vote_ctr < PIPI_THRESHOLD_1:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Menschen müssten mal', PIPI_COLOR_1)
+            await send_me(
+                ctx, f"{vote_ctr} ({percentage}%) Menschen müssten mal", PIPI_COLOR_1
+            )
         elif vote_ctr < PIPI_THRESHOLD_2:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree', PIPI_COLOR_2)
+            await send_me(
+                ctx,
+                f"{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree",
+                PIPI_COLOR_2,
+            )
         else:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree haugeAgree', PIPI_COLOR_3)
+            await send_me(
+                ctx,
+                f"{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree haugeAgree",
+                PIPI_COLOR_3,
+            )
 
 
-async def notify_vote_result(message, final_result=False):
-    votes_list = get_votes()
+async def notify_vote_result(message: str, final_result: bool = False):
+    vote_result = get_votes()
 
-    output = f'{VOTE_PLUS} {votes_list[0][0]} ({votes_list[0][1]}%), ' \
-             f'{VOTE_NEUTRAL} {votes_list[1][0]} ({votes_list[1][1]}%), ' \
-             f'{VOTE_MINUS} {votes_list[2][0]} ({votes_list[2][1]}%) | '
-    output += f'Endergebnis' if final_result else f'Zwischenergebnis'
-    output += f' mit insgesamt {len(votes)} abgegebenen Stimmen'
+    output = (
+        f"{VOTE_PLUS} {vote_result["plus"][0]} ({vote_result["plus"][1]}%), "
+        f"{VOTE_NEUTRAL} {vote_result["neutral"][0]} ({vote_result["neutral"][1]}%), "
+        f"{VOTE_MINUS} {vote_result["minus"][0]} ({vote_result["minus"][1]}%) | "
+    )
+    output += "Endergebnis" if final_result else "Zwischenergebnis"
+    output += f" mit insgesamt {len(votes)} abgegebenen Stimmen"
 
     await send_me(message, output, VOTE_COLOR)
 
 
-async def send_me(ctx, content, color):
+async def send_me(ctx: Union[Context, Channel, Message], content: Text, color: str):
     """ Change Text color to color and send content as message """
 
     if type(ctx) is Context or type(ctx) is Channel:
@@ -153,11 +173,11 @@ async def send_me(ctx, content, color):
 
 @bot.event
 async def event_ready():
-    print('Logged in')
+    print("Logged in")
 
 
 @bot.command(name="pipi", aliases=["Pipi"])
-async def cmd_pipi(ctx):
+async def cmd_pipi(ctx: Context):
     """ User mentioned there is a need to go to toilet. """
 
     pipi_votes[ctx.author.name] = 1
@@ -165,7 +185,7 @@ async def cmd_pipi(ctx):
 
 
 @bot.command(name="warpipi", aliases=["Warpipi", "zuspät", "Zuspät"])
-async def cmd_warpipi(ctx):
+async def cmd_warpipi(ctx: Context):
     """ User already went to toilet. """
 
     if ctx.author.name in pipi_votes:
@@ -174,18 +194,22 @@ async def cmd_warpipi(ctx):
 
 
 @bot.command(name="pause", aliases=["Pause"])
-async def cmd_pause(ctx):
+async def cmd_pause(ctx: Context):
     """ We will do a break now! """
 
     global pipi_votes
 
     if ctx.author.is_mod:
         pipi_votes = {}
-        await send_me(ctx, "Jetzt geht noch mal jeder aufs Klo, und dann streamen wir weiter!", PIPI_COLOR_0)
+        await send_me(
+            ctx,
+            "Jetzt geht noch mal jeder aufs Klo, und dann streamen wir weiter!",
+            PIPI_COLOR_0,
+        )
 
 
 @bot.command(name="reset", aliases=["Reset"])
-async def cmd_pause(ctx):
+async def cmd_pause(ctx: Context):
     """ Reset pipi votes """
 
     global pipi_votes
@@ -195,13 +219,13 @@ async def cmd_pause(ctx):
 
 
 @bot.command(name="pipimeter", aliases=["Pipimeter"])
-async def cmd_pipimeter(ctx):
+async def cmd_pipimeter(ctx: Context):
     if ctx.author.is_mod:
         await notify_pipi(ctx, use_timer=False)
 
 
 @bot.event
-async def event_message(message):
+async def event_message(message: Message):
     global votes
 
     if message.content.startswith(PREFIX):
@@ -209,25 +233,30 @@ async def event_message(message):
     else:
 
         # make sure the bot ignores itself and nightbot
-        if message.author.name.lower() == [NICK.lower(), 'nightbot']:
+        if message.author.name.lower() == [NICK.lower(), "nightbot"]:
             return
 
         # check if message is a vote
         msg = message.content
-        if msg[:2] == '+-' or msg[:2] == '-+' or msg[:3] == '-/+' or msg[:3] == '+/-' or msg[:len(
-                VOTE_NEUTRAL)] == VOTE_NEUTRAL:
-            add_vote(message, 'neutral')
-        elif msg[:1] == '+' or msg[:len(VOTE_PLUS)] == VOTE_PLUS:
-            add_vote(message, 'plus')
-        elif msg[:1] == '-' or msg[:len(VOTE_MINUS)] == VOTE_MINUS:
-            add_vote(message, 'minus')
+        if (
+            msg[:2] == "+-"
+            or msg[:2] == "-+"
+            or msg[:3] == "-/+"
+            or msg[:3] == "+/-"
+            or msg[: len(VOTE_NEUTRAL)] == VOTE_NEUTRAL
+        ):
+            add_vote(message, "neutral")
+        elif msg[:1] == "+" or msg[: len(VOTE_PLUS)] == VOTE_PLUS:
+            add_vote(message, "plus")
+        elif msg[:1] == "-" or msg[: len(VOTE_MINUS)] == VOTE_MINUS:
+            add_vote(message, "minus")
 
         if useRedis:
             # update redis-database
             update_redis()
 
 
-def add_vote(ctx, votetype):
+def add_vote(ctx: Context, votetype: Text):
     """adds votes to the votes-dict and sets timestamps"""
     global votes, vote_end_task, vote_interim_task
 
@@ -237,7 +266,9 @@ def add_vote(ctx, votetype):
 
     if len(votes) == 0:
         vote_end_task = asyncio.create_task(vote_end_voting(bot.get_channel(CHANNEL)))
-        vote_interim_task = asyncio.create_task(vote_interim_voting(bot.get_channel(CHANNEL)))
+        vote_interim_task = asyncio.create_task(
+            vote_interim_voting(bot.get_channel(CHANNEL))
+        )
 
     # should vote extend voting?
     if ctx.author.name not in votes or votes[ctx.author.name] != votetype:
@@ -259,22 +290,22 @@ def update_redis():
 
     # count values in dict
     for x in votes.values():
-        if x == 'neutral':
+        if x == "neutral":
             neutral += 1
-        elif x == 'plus':
+        elif x == "plus":
             plus += 1
-        elif x == 'minus':
+        elif x == "minus":
             minus += 1
 
     if useRedis:
         p = r.pipeline()  # start transaction
-        p.set('plus', plus)
-        p.set('neutral', neutral)
-        p.set('minus', minus)
+        p.set("plus", plus)
+        p.set("neutral", neutral)
+        p.set("minus", minus)
         p.execute()  # transaction end
 
 
-def get_votes():
+def get_votes() -> Dict[str, Tuple[int, float]]:
     """analyzes the votes-dict and counts the votes"""
     plus = 0
     minus = 0
@@ -282,19 +313,21 @@ def get_votes():
 
     # count values in dict
     for x in votes.values():
-        if x == 'neutral':
+        if x == "neutral":
             neutral += 1
-        elif x == 'plus':
+        elif x == "plus":
             plus += 1
-        elif x == 'minus':
+        elif x == "minus":
             minus += 1
 
-    return [[plus, get_percentage(plus, len(votes))],
-            [neutral, get_percentage(neutral, len(votes))],
-            [minus, get_percentage(minus, len(votes))]]
+    return {
+        "plus": (plus, get_percentage(plus, len(votes))),
+        "neutral": (neutral, get_percentage(neutral, len(votes))),
+        "minus": (minus, get_percentage(minus, len(votes))),
+    }
 
 
-async def vote_end_voting(channel):
+async def vote_end_voting(channel: Text):
     """ End a currently open voting """
 
     global vote_task_new
@@ -318,7 +351,7 @@ async def vote_end_voting(channel):
         update_redis()
 
 
-async def vote_interim_voting(channel):
+async def vote_interim_voting(channel: Text):
     """ End a currently open voting """
 
     global vote_interim_task
@@ -326,7 +359,9 @@ async def vote_interim_voting(channel):
     await asyncio.sleep(VOTE_DELAY_INTERIM)
     if not vote_end_task.done() and len(votes) >= VOTE_MIN_VOTES:
         await notify_vote_result(channel)
-        vote_interim_task = asyncio.create_task(vote_interim_voting(bot.get_channel(CHANNEL)))
+        vote_interim_task = asyncio.create_task(
+            vote_interim_voting(bot.get_channel(CHANNEL))
+        )
 
     if useRedis:
         # update redis-database
@@ -343,8 +378,10 @@ async def pipi_block_notification():
     """ Just do nothing but sleep for PIPI_DELAY seconds """
 
     await asyncio.sleep(PIPI_DELAY)
+
+
 @bot.command(name="giveaway")
-async def cmd_giveaway(ctx):
+async def cmd_giveaway(ctx: Context):
     """ take part at the giveaway """
 
     global giveaway_entries
@@ -355,7 +392,7 @@ async def cmd_giveaway(ctx):
 
 
 @bot.command(name="giveaway-open")
-async def cmd_giveawayopen(ctx):
+async def cmd_giveawayopen(ctx: Context):
     """ Reset and Open the giveaway """
 
     global giveaway_entries
@@ -364,21 +401,30 @@ async def cmd_giveawayopen(ctx):
     if ctx.author.is_mod:
         giveaway_enabled = True
         giveaway_entries = {}
-        await send_me(ctx, "Das Giveaway wurde gestartet. Schreibe !giveaway in den Chat um daran teilzunehmen.", VOTE_COLOR)
+        await send_me(
+            ctx,
+            "Das Giveaway wurde gestartet. Schreibe !giveaway in den Chat um daran teilzunehmen.",
+            VOTE_COLOR,
+        )
+
 
 @bot.command(name="giveaway-reopen")
-async def cmd_giveawayopen(ctx):
+async def cmd_giveawayopen(ctx: Context):
     """ Reopen the giveaway after closing it (so reset) """
 
     global giveaway_enabled
 
     if ctx.author.is_mod:
         giveaway_enabled = True
-        await send_me(ctx, "Das Giveaway wurde wieder geöffnet. Schreibe !giveaway in den Chat um daran teilzunehmen.", VOTE_COLOR)
+        await send_me(
+            ctx,
+            "Das Giveaway wurde wieder geöffnet. Schreibe !giveaway in den Chat um daran teilzunehmen.",
+            VOTE_COLOR,
+        )
 
 
 @bot.command(name="giveaway-close")
-async def cmd_giveawayopen(ctx):
+async def cmd_giveawayopen(ctx: Context):
     """ Close the giveaway """
 
     global giveaway_entries
@@ -386,11 +432,15 @@ async def cmd_giveawayopen(ctx):
 
     if ctx.author.is_mod:
         giveaway_enabled = False
-        await send_me(ctx, "Das Giveaway wurde geschlossen. Es kann niemand mehr teilnehmen.", VOTE_COLOR)
+        await send_me(
+            ctx,
+            "Das Giveaway wurde geschlossen. Es kann niemand mehr teilnehmen.",
+            VOTE_COLOR,
+        )
 
 
 @bot.command(name="giveaway-draw")
-async def cmd_giveawaydraw(ctx):
+async def cmd_giveawaydraw(ctx: Context):
     """ Draw a giveaway winner """
 
     global giveaway_entries
@@ -400,13 +450,21 @@ async def cmd_giveawaydraw(ctx):
             winner = random.choice(list(giveaway_entries))
             entry_count = len(giveaway_entries)
             del giveaway_entries[winner]
-            await send_me(ctx, f"Es wurde aus {entry_count} Einträgen ausgelost. Und der Gewinner ist... @{winner}", VOTE_COLOR)
+            await send_me(
+                ctx,
+                f"Es wurde aus {entry_count} Einträgen ausgelost. Und der Gewinner ist... @{winner}",
+                VOTE_COLOR,
+            )
         else:
-            await send_me(ctx, "Es muss Einträge geben, damit ein Gewinner gezogen werden kann.", VOTE_COLOR)
-       
+            await send_me(
+                ctx,
+                "Es muss Einträge geben, damit ein Gewinner gezogen werden kann.",
+                VOTE_COLOR,
+            )
+
 
 @bot.command(name="giveaway-reset")
-async def cmd_giveawayreset(ctx):
+async def cmd_giveawayreset(ctx: Context):
     """ Reset giveaway entrys """
 
     global giveaway_entries
@@ -415,7 +473,11 @@ async def cmd_giveawayreset(ctx):
     if ctx.author.is_mod:
         giveaway_enabled = False
         giveaway_entries = {}
-        await send_me(ctx, "Das Giveaway wurde geschlossen und alle Einträge entfernt.", VOTE_COLOR)
+        await send_me(
+            ctx,
+            "Das Giveaway wurde geschlossen und alle Einträge entfernt.",
+            VOTE_COLOR,
+        )
 
 
 bot.run()
