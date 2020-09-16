@@ -209,7 +209,7 @@ async def event_message(message):
     else:
 
         # make sure the bot ignores itself and nightbot
-        if message.author.name.lower() == [NICK.lower(), 'nightbot']:
+        if message.author.name.lower() in [NICK.lower(), 'nightbot']:
             return
 
         # check if message is a vote
