@@ -1,9 +1,9 @@
 import asyncio
 import os
+import random
 import time
 
 import redis
-import random
 from dotenv import load_dotenv
 from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
@@ -87,8 +87,10 @@ if useRedis and r:
 
 def get_percentage(part, total):
     """ Calculate percentage """
+    if total != 0:
+        return round(part / total * 100, 1)
 
-    return round(part / total * 100, 1)
+    return 0
 
 
 async def notify_pipi(ctx, use_timer=True, message=None):
@@ -198,6 +200,12 @@ async def cmd_pause(ctx):
 async def cmd_pipimeter(ctx):
     if ctx.author.is_mod:
         await notify_pipi(ctx, use_timer=False)
+
+
+@bot.command(name="hauge-commands", aliases=["Hauge-commands", "haugebot-commands", "Haugebot-commands"])
+async def cmd_haugebot_commands(ctx):
+    await ctx.send(
+        "Eine Liste mit den Commands des HaugeBot findest du unter: https://github.com/dnns01/TwitchHausGeist/blob/master/README.md")
 
 
 @bot.event
@@ -403,7 +411,7 @@ async def cmd_giveawaydraw(ctx):
             await send_me(ctx, f"Es wurde aus {entry_count} Einträgen ausgelost. Und der Gewinner ist... @{winner}", VOTE_COLOR)
         else:
             await send_me(ctx, "Es muss Einträge geben, damit ein Gewinner gezogen werden kann.", VOTE_COLOR)
-       
+
 
 @bot.command(name="giveaway-reset")
 async def cmd_giveawayreset(ctx):
