@@ -44,7 +44,7 @@ class PipiCog:
                 if vote == 1:
                     vote_ctr += 1
 
-            percentage = self.get_percentage(vote_ctr, chatters.count)
+            percentage = self.bot.get_percentage(vote_ctr, chatters.count)
 
             if vote_ctr == 0:
                 await self.bot.send_me(ctx,
