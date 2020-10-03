@@ -1,7 +1,7 @@
 import asyncio
 import os
 import time
-from typing import Final, Text, Optional, Union, Dict, Tuple
+from typing import Text, Optional, Union, Dict, Tuple
 
 import redis
 import random
@@ -10,30 +10,30 @@ from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
 
 load_dotenv()
-IRC_TOKEN: Final[Text] = os.getenv("IRC_TOKEN")
-NICK: Final[Text] = os.getenv("NICK")
-CHANNEL: Final[Text] = os.getenv("CHANNEL")
-PREFIX: Final[Text] = os.getenv("PREFIX")
+IRC_TOKEN = os.getenv("IRC_TOKEN")
+NICK = os.getenv("NICK")
+CHANNEL= os.getenv("CHANNEL")
+PREFIX = os.getenv("PREFIX")
 
 # pipibot related
-PIPI_DELAY: Final[int] = int(os.getenv("PIPI_DELAY"))
-PIPI_THRESHOLD_1: Final[int] = int(os.getenv("PIPI_THRESHOLD_1"))
-PIPI_THRESHOLD_2: Final[int] = int(os.getenv("PIPI_THRESHOLD_2"))
-PIPI_COLOR_0: Final[Text] = os.getenv("PIPI_COLOR_0")
-PIPI_COLOR_1: Final[Text] = os.getenv("PIPI_COLOR_1")
-PIPI_COLOR_2: Final[Text] = os.getenv("PIPI_COLOR_2")
-PIPI_COLOR_3: Final[Text] = os.getenv("PIPI_COLOR_3")
+PIPI_DELAY = int(os.getenv("PIPI_DELAY"))
+PIPI_THRESHOLD_1 = int(os.getenv("PIPI_THRESHOLD_1"))
+PIPI_THRESHOLD_2 = int(os.getenv("PIPI_THRESHOLD_2"))
+PIPI_COLOR_0 = os.getenv("PIPI_COLOR_0")
+PIPI_COLOR_1 = os.getenv("PIPI_COLOR_1")
+PIPI_COLOR_2 = os.getenv("PIPI_COLOR_2")
+PIPI_COLOR_3 = os.getenv("PIPI_COLOR_3")
 pipi_task = None
 pipi_votes = {}
 
 # vote bot related
-VOTE_DELAY_END: Final[int] = int(os.getenv("VOTE_DELAY_END"))
-VOTE_DELAY_INTERIM: Final[int] = int(os.getenv("VOTE_DELAY_INTERIM"))
-VOTE_MIN_VOTES: Final[int] = int(os.getenv("VOTE_MIN_VOTES"))
-VOTE_COLOR: Final[Text] = os.getenv("VOTE_COLOR")
-VOTE_PLUS: Final[Text] = os.getenv("VOTE_PLUS")
-VOTE_MINUS: Final[Text] = os.getenv("VOTE_MINUS")
-VOTE_NEUTRAL: Final[Text] = os.getenv("VOTE_NEUTRAL")
+VOTE_DELAY_END = int(os.getenv("VOTE_DELAY_END"))
+VOTE_DELAY_INTERIM = int(os.getenv("VOTE_DELAY_INTERIM"))
+VOTE_MIN_VOTES = int(os.getenv("VOTE_MIN_VOTES"))
+VOTE_COLOR = os.getenv("VOTE_COLOR")
+VOTE_PLUS = os.getenv("VOTE_PLUS")
+VOTE_MINUS = os.getenv("VOTE_MINUS")
+VOTE_NEUTRAL = os.getenv("VOTE_NEUTRAL")
 vote_end_task = None
 vote_interim_task = None
 vote_task_new = None
