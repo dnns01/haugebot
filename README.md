@@ -59,6 +59,8 @@ as the `hausgeist.py` file. This file must look like this:
     PIPI_DELAY=<Delay in seconds as spam protection. This is the number of seconds between two chat announcements>
     PIPI_THRESHOLD_1=<First Threshold. Used to change color and show, it is a bit more urgent>
     PIPI_THRESHOLD_2=<Second Threshold. Used to change color and show, that it is really urgent>
+    PIPIMETER_LOOP=<Number of minutes, when the current pipi count should get sent into the chat, when the stream is life>
+    PIPI_RESET_THRESHOLD=<Number of minutes, the stream had to be offline, when it turns live, to reset the pipi count>
     PIPI_COLOR_0=<Neutral color used for !pause command, and if pipi vote counter is 0>
     PIPI_COLOR_1=<Color used when pipi vote is at least one, and less than PIPI_THRESHOLD_1>
     PIPI_COLOR_2=<Color used when pipi vote is at least PIPI_THRESHOLD_1, and less than PIPI_THRESHOLD_2>
@@ -72,6 +74,9 @@ as the `hausgeist.py` file. This file must look like this:
     VOTE_PLUS=<Positive Chate Emote>
     VOTE_MINUS=<Negative Chat Emote>
     VOTE_NEUTRAL=<Neutral Chat Emote>
+    
+    # Giveaway Bot
+    GIVEAWAY_BOT=<Chat Color that is used to send giveaway messages>
     
     # Redis Server
     REDIS_HOST=<IP of the Redis-Server>

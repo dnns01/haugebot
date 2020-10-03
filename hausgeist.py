@@ -1,29 +1,23 @@
 import asyncio
 import os
-import random
 import time
+from abc import ABC
 
 import redis
 from dotenv import load_dotenv
 from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
 
+from giveaway_cog import GiveawayGog
+from pipi_cog import PipiCog
+
 load_dotenv()
 IRC_TOKEN = os.getenv("IRC_TOKEN")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 NICK = os.getenv("NICK")
 CHANNEL = os.getenv("CHANNEL")
 PREFIX = os.getenv("PREFIX")
-
-# pipibot related
-PIPI_DELAY = int(os.getenv("PIPI_DELAY"))
-PIPI_THRESHOLD_1 = int(os.getenv("PIPI_THRESHOLD_1"))
-PIPI_THRESHOLD_2 = int(os.getenv("PIPI_THRESHOLD_2"))
-PIPI_COLOR_0 = os.getenv("PIPI_COLOR_0")
-PIPI_COLOR_1 = os.getenv("PIPI_COLOR_1")
-PIPI_COLOR_2 = os.getenv("PIPI_COLOR_2")
-PIPI_COLOR_3 = os.getenv("PIPI_COLOR_3")
-pipi_task = None
-pipi_votes = {}
 
 # vote bot related
 VOTE_DELAY_END = int(os.getenv("VOTE_DELAY_END"))
@@ -38,16 +32,47 @@ vote_interim_task = None
 vote_task_new = None
 votes = {}
 
-# giveaway bot related
-giveaway_enabled = False
-giveaway_entries = {}
 
-bot = commands.Bot(
-    irc_token=IRC_TOKEN,
-    prefix=PREFIX,
-    nick=NICK,
-    initial_channels=[CHANNEL]
-)
+class HaugeBot(commands.Bot, ABC):
+    def __init__(self):
+        self.IRC_TOKEN = os.getenv("IRC_TOKEN")
+        self.CLIENT_ID = os.getenv("CLIENT_ID")
+        self.CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+        self.NICK = os.getenv("NICK")
+        self.CHANNEL = os.getenv("CHANNEL")
+        self.PREFIX = os.getenv("PREFIX")
+        super().__init__(irc_token=IRC_TOKEN, prefix=PREFIX, nick=NICK, initial_channels=[CHANNEL], client_id=CLIENT_ID,
+                         client_secret=CLIENT_SECRET)
+        self.pipi_cog = PipiCog(self)
+        self.giveaway_cog = GiveawayGog(self)
+        self.add_cog(self.pipi_cog)
+        self.add_cog(self.giveaway_cog)
+
+    @staticmethod
+    async def send_me(ctx, content, color):
+        """ Change Text color to color and send content as message """
+
+        if type(ctx) is Context or type(ctx) is Channel:
+            await ctx.color(color)
+            await ctx.send_me(content)
+        elif type(ctx) is Message:
+            await ctx.channel.color(color)
+            await ctx.channel.send_me(content)
+
+    async def event_ready(self):
+        print('Logged in')
+        await self.pipi_cog.start_pipimeter_loop()
+
+    @staticmethod
+    def get_percentage(part, total):
+        """ Calculate percentage """
+        if total != 0:
+            return round(part / total * 100, 1)
+
+        return 0
+
+
+bot = HaugeBot()
 
 # redis-server related
 R_HOST = os.getenv("REDIS_HOST")
@@ -70,9 +95,6 @@ except Exception as ex:
 
 if useRedis and r:
     # update constants in Redis-DB
-    r.set('pipiDelay', PIPI_DELAY)
-    r.set('pipiT1', PIPI_THRESHOLD_1)
-    r.set('pipiT2', PIPI_THRESHOLD_2)
     r.set('voteMin', VOTE_MIN_VOTES)
     r.set('voteDelayEnd', VOTE_DELAY_END)
     r.set('voteDelayInter', VOTE_DELAY_INTERIM)
@@ -85,51 +107,6 @@ if useRedis and r:
     p.execute()  # transaction end
 
 
-def get_percentage(part, total):
-    """ Calculate percentage """
-    if total != 0:
-        return round(part / total * 100, 1)
-
-    return 0
-
-
-async def notify_pipi(ctx, use_timer=True, message=None):
-    """ Write a message in chat, if there hasn't been a notification since PIPI_DELAY seconds. """
-
-    global pipi_task
-
-    if use_timer and pipi_task and not pipi_task.done():
-        return
-
-    if pipi_task:
-        pipi_task.cancel()
-
-    pipi_task = asyncio.create_task(pipi_block_notification())
-    vote_ctr = 0
-    chatters = await bot.get_chatters(CHANNEL)
-
-    if message is not None:
-        await send_me(ctx, message, PIPI_COLOR_0)
-    else:
-        for vote in pipi_votes.values():
-            if vote == 1:
-                vote_ctr += 1
-
-        percentage = get_percentage(vote_ctr, chatters.count)
-
-        if vote_ctr == 0:
-            await send_me(ctx, f'Kein Druck (mehr) auf der Blase. Es kann fröhlich weiter gestreamt werden!',
-                          PIPI_COLOR_0)
-        elif vote_ctr == 1:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Mensch müsste mal', PIPI_COLOR_1)
-        elif vote_ctr < PIPI_THRESHOLD_1:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Menschen müssten mal', PIPI_COLOR_1)
-        elif vote_ctr < PIPI_THRESHOLD_2:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree', PIPI_COLOR_2)
-        else:
-            await send_me(ctx, f'{vote_ctr} ({percentage}%) Menschen müssten mal haugeAgree haugeAgree', PIPI_COLOR_3)
-
-
 async def notify_vote_result(message, final_result=False):
     votes_list = get_votes()
 
@@ -139,67 +116,7 @@ async def notify_vote_result(message, final_result=False):
     output += f'Endergebnis' if final_result else f'Zwischenergebnis'
     output += f' mit insgesamt {len(votes)} abgegebenen Stimmen'
 
-    await send_me(message, output, VOTE_COLOR)
-
-
-async def send_me(ctx, content, color):
-    """ Change Text color to color and send content as message """
-
-    if type(ctx) is Context or type(ctx) is Channel:
-        await ctx.color(color)
-        await ctx.send_me(content)
-    elif type(ctx) is Message:
-        await ctx.channel.color(color)
-        await ctx.channel.send_me(content)
-
-
-@bot.event
-async def event_ready():
-    print('Logged in')
-
-
-@bot.command(name="pipi", aliases=["Pipi"])
-async def cmd_pipi(ctx):
-    """ User mentioned there is a need to go to toilet. """
-
-    pipi_votes[ctx.author.name] = 1
-    await notify_pipi(ctx)
-
-
-@bot.command(name="warpipi", aliases=["Warpipi", "zuspät", "Zuspät"])
-async def cmd_warpipi(ctx):
-    """ User already went to toilet. """
-
-    if ctx.author.name in pipi_votes:
-        pipi_votes[ctx.author.name] = 0
-        await notify_pipi(ctx)
-
-
-@bot.command(name="pause", aliases=["Pause"])
-async def cmd_pause(ctx):
-    """ We will do a break now! """
-
-    global pipi_votes
-
-    if ctx.author.is_mod:
-        pipi_votes = {}
-        await send_me(ctx, "Jetzt geht noch mal jeder aufs Klo, und dann streamen wir weiter!", PIPI_COLOR_0)
-
-
-@bot.command(name="reset", aliases=["Reset"])
-async def cmd_pause(ctx):
-    """ Reset pipi votes """
-
-    global pipi_votes
-
-    if ctx.author.is_mod:
-        pipi_votes = {}
-
-
-@bot.command(name="pipimeter", aliases=["Pipimeter"])
-async def cmd_pipimeter(ctx):
-    if ctx.author.is_mod:
-        await notify_pipi(ctx, use_timer=False)
+    await bot.send_me(message, output, VOTE_COLOR)
 
 
 @bot.command(name="hauge-commands", aliases=["Hauge-commands", "haugebot-commands", "Haugebot-commands"])
@@ -297,9 +214,9 @@ def get_votes():
         elif x == 'minus':
             minus += 1
 
-    return [[plus, get_percentage(plus, len(votes))],
-            [neutral, get_percentage(neutral, len(votes))],
-            [minus, get_percentage(minus, len(votes))]]
+    return [[plus, bot.get_percentage(plus, len(votes))],
+            [neutral, bot.get_percentage(neutral, len(votes))],
+            [minus, bot.get_percentage(minus, len(votes))]]
 
 
 async def vote_end_voting(channel):
@@ -345,85 +262,6 @@ async def vote_block_votes():
     """ Just do nothing but sleep for VOTE_DELAY_INTERIM seconds """
 
     await asyncio.sleep(VOTE_DELAY_INTERIM)
-
-
-async def pipi_block_notification():
-    """ Just do nothing but sleep for PIPI_DELAY seconds """
-
-    await asyncio.sleep(PIPI_DELAY)
-@bot.command(name="giveaway")
-async def cmd_giveaway(ctx):
-    """ take part at the giveaway """
-
-    global giveaway_entries
-    global giveaway_enabled
-
-    if giveaway_enabled:
-        giveaway_entries[ctx.author.name] = 1
-
-
-@bot.command(name="giveaway-open")
-async def cmd_giveawayopen(ctx):
-    """ Reset and Open the giveaway """
-
-    global giveaway_entries
-    global giveaway_enabled
-
-    if ctx.author.is_mod:
-        giveaway_enabled = True
-        giveaway_entries = {}
-        await send_me(ctx, "Das Giveaway wurde gestartet. Schreibe !giveaway in den Chat um daran teilzunehmen.", VOTE_COLOR)
-
-@bot.command(name="giveaway-reopen")
-async def cmd_giveawayopen(ctx):
-    """ Reopen the giveaway after closing it (so reset) """
-
-    global giveaway_enabled
-
-    if ctx.author.is_mod:
-        giveaway_enabled = True
-        await send_me(ctx, "Das Giveaway wurde wieder geöffnet. Schreibe !giveaway in den Chat um daran teilzunehmen.", VOTE_COLOR)
-
-
-@bot.command(name="giveaway-close")
-async def cmd_giveawayopen(ctx):
-    """ Close the giveaway """
-
-    global giveaway_entries
-    global giveaway_enabled
-
-    if ctx.author.is_mod:
-        giveaway_enabled = False
-        await send_me(ctx, "Das Giveaway wurde geschlossen. Es kann niemand mehr teilnehmen.", VOTE_COLOR)
-
-
-@bot.command(name="giveaway-draw")
-async def cmd_giveawaydraw(ctx):
-    """ Draw a giveaway winner """
-
-    global giveaway_entries
-
-    if ctx.author.is_mod:
-        if len(giveaway_entries) > 0:
-            winner = random.choice(list(giveaway_entries))
-            entry_count = len(giveaway_entries)
-            del giveaway_entries[winner]
-            await send_me(ctx, f"Es wurde aus {entry_count} Einträgen ausgelost. Und der Gewinner ist... @{winner}", VOTE_COLOR)
-        else:
-            await send_me(ctx, "Es muss Einträge geben, damit ein Gewinner gezogen werden kann.", VOTE_COLOR)
-
-
-@bot.command(name="giveaway-reset")
-async def cmd_giveawayreset(ctx):
-    """ Reset giveaway entrys """
-
-    global giveaway_entries
-    global giveaway_enabled
-
-    if ctx.author.is_mod:
-        giveaway_enabled = False
-        giveaway_entries = {}
-        await send_me(ctx, "Das Giveaway wurde geschlossen und alle Einträge entfernt.", VOTE_COLOR)
 
 
 bot.run()
