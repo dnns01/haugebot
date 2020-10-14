@@ -61,7 +61,7 @@ class VoteCog:
         if not self.vote_end_task.done() and len(self.votes) >= self.MIN_VOTES:
             await self.notify_vote_result(channel)
             self.vote_interim_task = asyncio.create_task(
-                self.vote_interim_voting(self.bot.get_channel(self.bot.CHANNEL)))
+                self.vote_interim_voting(self.bot.get_channel()))
 
     async def vote_block_votes(self):
         """ Just do nothing but sleep for VOTE_DELAY_INTERIM seconds """
@@ -89,7 +89,7 @@ class VoteCog:
 
     async def event_message(self, message):
         # make sure the bot ignores itself and nightbot
-        if message.author.name.lower() in [self.NICK.lower(), 'nightbot']:
+        if message.author.name.lower() in [self.bot.NICK.lower(), 'nightbot']:
             return
 
         # check if message is a vote
@@ -110,9 +110,9 @@ class VoteCog:
             return
 
         if len(self.votes) == 0:
-            self.vote_end_task = asyncio.create_task(self.vote_end_voting(self.bot.get_channel(self.bot.CHANNEL)))
+            self.vote_end_task = asyncio.create_task(self.vote_end_voting(self.bot.get_channel()))
             self.vote_interim_task = asyncio.create_task(
-                self.vote_interim_voting(self.bot.get_channel(self.bot.CHANNEL)))
+                self.vote_interim_voting(self.bot.get_channel()))
 
         # should vote extend voting?
         if ctx.author.name not in self.votes or self.votes[ctx.author.name] != votetype:

@@ -58,6 +58,18 @@ class HaugeBot(commands.Bot, ABC):
 
         return 0
 
+    def get_channel(self, **kwargs):
+        if kwargs:
+            return self.get_channel(kwargs)
+
+        return self.get_channel(self.CHANNEL)
+
+    async def get_chatters(self):
+        return await self.get_chatters(self.CHANNEL)
+
+    async def get_stream(self):
+        return await self.get_stream(self.CHANNEL)
+
 
 bot = HaugeBot()
 
