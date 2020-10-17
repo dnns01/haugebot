@@ -35,7 +35,7 @@ class PipiCog:
 
         self.pipi_task = asyncio.create_task(self.pipi_block_notification())
         vote_ctr = 0
-        chatters = await self.bot.get_chatters()
+        chatters = await self.bot.chatters()
 
         if message is not None:
             await self.bot.send_me(ctx, message, self.COLOR_0)
@@ -75,13 +75,13 @@ class PipiCog:
         while True:
             await asyncio.sleep(self.PIPIMETER_LOOP * 60)
 
-            if await self.bot.get_stream():
+            if await self.bot.stream():
                 if offline_since >= self.RESET_THRESHOLD:
                     self.pipi_votes = {}
                 offline_since = 0
 
                 if len(self.pipi_votes) > 0:
-                    channel = self.bot.get_channel()
+                    channel = self.bot.channel()
                     message = Message(channel=channel)
                     await self.notify_pipi(message, use_timer=False)
             else:

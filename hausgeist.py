@@ -6,6 +6,7 @@ from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
 
 from giveaway_cog import GiveawayGog
+from info_cog import InfoCog
 from pipi_cog import PipiCog
 from vote_cog import VoteCog
 
@@ -31,9 +32,11 @@ class HaugeBot(commands.Bot, ABC):
         self.pipi_cog = PipiCog(self)
         self.giveaway_cog = GiveawayGog(self)
         self.vote_cog = VoteCog(self)
+        self.info_cog = InfoCog(self)
         self.add_cog(self.pipi_cog)
         self.add_cog(self.giveaway_cog)
         self.add_cog(self.vote_cog)
+        self.add_cog(self.info_cog)
 
     @staticmethod
     async def send_me(ctx, content, color):
@@ -49,6 +52,7 @@ class HaugeBot(commands.Bot, ABC):
     async def event_ready(self):
         print('Logged in')
         await self.pipi_cog.start_pipimeter_loop()
+        await self.info_cog.start_info_loop()
 
     @staticmethod
     def get_percentage(part, total):
@@ -58,16 +62,13 @@ class HaugeBot(commands.Bot, ABC):
 
         return 0
 
-    def get_channel(self, **kwargs):
-        if kwargs:
-            return self.get_channel(kwargs)
-
+    def channel(self):
         return self.get_channel(self.CHANNEL)
 
-    async def get_chatters(self):
+    async def chatters(self):
         return await self.get_chatters(self.CHANNEL)
 
-    async def get_stream(self):
+    async def stream(self):
         return await self.get_stream(self.CHANNEL)
 
 
