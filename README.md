@@ -54,8 +54,11 @@ as the `hausgeist.py` file. This file must look like this:
     NICK=<Nick of the user the OAuth Token was generated for>
     CHANNEL=<Channel that should be entered>
     PREFIX=<Prefix for commands. In this case it is !>
+    
+    # Info Bot
     INFO_JSON=<Path to json file that contains info array>
     INFO_LOOP=<Number of minutes, when an information is dropped into the chat (only of the stream is live>
+    INFO_COLOR=<Color, info messages should be shown at>
     
     # Pipi Bot
     PIPI_DELAY=<Delay in seconds as spam protection. This is the number of seconds between two chat announcements>
