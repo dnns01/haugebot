@@ -24,7 +24,6 @@ class InfoCog:
         pass
 
     async def start_info_loop(self):
-        print("Starting Loop")
         asyncio.create_task(self.info_loop())
 
     async def info_loop(self):
@@ -32,9 +31,8 @@ class InfoCog:
          If this is true, reset the pipi counter, as you can assume, that the stream recently started."""
 
         while True:
-            print(f"Loop started. Sleeping for {self.INFO_LOOP} minutes")
             await asyncio.sleep(self.INFO_LOOP * 60)
-            print("Hey.... wake up!")
+
             if await self.bot.stream():
                 channel = self.bot.channel()
                 message = f"Psssst... wusstest du eigentlich schon, {random.choice(self.info)}"
