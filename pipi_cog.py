@@ -22,6 +22,9 @@ class PipiCog:
         self.pipi_votes = {}
 
     async def start_pipimeter_loop(self):
+        # Wait for one minute to avoid this loop and the info loop to post directly after each other
+        await asyncio.sleep(60)
+
         asyncio.create_task(self.pipimeter_loop())
 
     async def notify_pipi(self, ctx, use_timer=True, message=None):
@@ -99,7 +102,7 @@ class PipiCog:
         """ User already went to toilet. """
 
         if ctx.author.name in self.pipi_votes:
-            self.pipi_votes[ctx.author.name] = 0
+            del self.pipi_votes[ctx.author.name]
             await self.notify_pipi(ctx)
 
     @commands.command(name="pause", aliases=["Pause"])
