@@ -1,5 +1,7 @@
 import asyncio
+import logging
 import os
+from datetime import datetime
 
 from twitchio.dataclasses import Message
 from twitchio.ext import commands
@@ -20,12 +22,6 @@ class PipiCog:
         self.COLOR_3 = os.getenv("PIPI_COLOR_3")
         self.pipi_task = None
         self.pipi_votes = {}
-
-    async def start_pipimeter_loop(self):
-        # Wait for one minute to avoid this loop and the info loop to post directly after each other
-        await asyncio.sleep(60)
-
-        asyncio.create_task(self.pipimeter_loop())
 
     async def notify_pipi(self, ctx, use_timer=True, message=None):
         """ Write a message in chat, if there hasn't been a notification since DELAY seconds. """
@@ -73,12 +69,20 @@ class PipiCog:
         """ Send !pipimeter into the chat every x Minutes. Also check, whether the stream was offline for x Minutes.
          If this is true, reset the pipi counter, as you can assume, that the stream recently started."""
 
+        logging.log(logging.INFO,
+                    f"Pipi loop started To have an offset from Info loop, wait for one minute. {datetime.now()} {self}")
         offline_since = 0
+        await asyncio.sleep(60)
 
         while True:
+            logging.log(logging.INFO,
+                        f"Inside Pipi loop. Sleep for {self.PIPIMETER_LOOP} minutes. {datetime.now()} {self}")
             await asyncio.sleep(self.PIPIMETER_LOOP * 60)
+            logging.log(logging.INFO, f"Inside Pipi loop finished sleeping now. {datetime.now()} {self}")
 
             if await self.bot.stream():
+                logging.log(logging.INFO,
+                            f"Inside Pipi loop. Stream is online, so check for threshold!!! {datetime.now()} {self}")
                 if offline_since >= self.RESET_THRESHOLD:
                     self.pipi_votes = {}
                 offline_since = 0
@@ -89,6 +93,9 @@ class PipiCog:
                     await self.notify_pipi(message, use_timer=False)
             else:
                 offline_since += self.PIPIMETER_LOOP
+
+            logging.log(logging.INFO,
+                        f"Inside Pipi loop. Ooooookay, Loop ended, let's continue with the next round!!! {datetime.now()} {self}")
 
     @commands.command(name="pipi", aliases=["Pipi"])
     async def cmd_pipi(self, ctx):

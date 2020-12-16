@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import os
 from abc import ABC
 
@@ -9,6 +11,8 @@ from giveaway_cog import GiveawayGog
 from info_cog import InfoCog
 from pipi_cog import PipiCog
 from vote_cog import VoteCog
+
+logging.basicConfig(level=logging.INFO, filename='hausgeist.log')
 
 load_dotenv()
 IRC_TOKEN = os.getenv("IRC_TOKEN")
@@ -51,8 +55,8 @@ class HaugeBot(commands.Bot, ABC):
 
     async def event_ready(self):
         print('Logged in')
-        await self.pipi_cog.start_pipimeter_loop()
-        await self.info_cog.start_info_loop()
+        asyncio.create_task(self.info_cog.info_loop())
+        asyncio.create_task(self.pipi_cog.pipimeter_loop())
 
     @staticmethod
     def get_percentage(part, total):
