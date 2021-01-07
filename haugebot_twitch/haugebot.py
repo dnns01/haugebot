@@ -1,18 +1,21 @@
 import asyncio
-import logging
 import os
+import sqlite3
 from abc import ABC
 
 from dotenv import load_dotenv
-from twitchio.dataclasses import Context, Message, Channel
-from twitchio.ext import commands
-
-from giveaway_cog import GiveawayGog
+from giveaway_cog import GiveawayCog
+# from giveaway_cog import GiveawayGog
 from info_cog import InfoCog
 from pipi_cog import PipiCog
+from twitchio.dataclasses import Context, Message, Channel
+from twitchio.ext import commands
 from vote_cog import VoteCog
 
-logging.basicConfig(level=logging.INFO, filename='hausgeist.log')
+# from pipi_cog import PipiCog
+# from vote_cog import VoteCog
+
+# logging.basicConfig(level=logging.INFO, filename='hausgeist.log')
 
 load_dotenv()
 IRC_TOKEN = os.getenv("IRC_TOKEN")
@@ -33,14 +36,12 @@ class HaugeBot(commands.Bot, ABC):
         self.PREFIX = os.getenv("PREFIX")
         super().__init__(irc_token=IRC_TOKEN, prefix=PREFIX, nick=NICK, initial_channels=[CHANNEL], client_id=CLIENT_ID,
                          client_secret=CLIENT_SECRET)
-        self.pipi_cog = PipiCog(self)
-        self.giveaway_cog = GiveawayGog(self)
-        self.vote_cog = VoteCog(self)
         self.info_cog = InfoCog(self)
-        self.add_cog(self.pipi_cog)
-        self.add_cog(self.giveaway_cog)
-        self.add_cog(self.vote_cog)
+        self.pipi_cog = PipiCog(self)
+        self.add_cog(GiveawayCog(self))
+        self.add_cog(VoteCog(self))
         self.add_cog(self.info_cog)
+        self.add_cog(self.pipi_cog)
 
     @staticmethod
     async def send_me(ctx, content, color):
@@ -55,6 +56,7 @@ class HaugeBot(commands.Bot, ABC):
 
     async def event_ready(self):
         print('Logged in')
+
         asyncio.create_task(self.info_cog.info_loop())
         asyncio.create_task(self.pipi_cog.pipimeter_loop())
 
@@ -74,6 +76,16 @@ class HaugeBot(commands.Bot, ABC):
 
     async def stream(self):
         return await self.get_stream(self.CHANNEL)
+
+    @staticmethod
+    def get_setting(key):
+        conn = sqlite3.connect("db.sqlite3")
+
+        c = conn.cursor()
+        c.execute('SELECT value from haugebot_web_setting where key = ?', (key,))
+        value = c.fetchone()[0]
+        conn.close()
+        return value
 
 
 bot = HaugeBot()

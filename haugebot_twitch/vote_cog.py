@@ -2,9 +2,8 @@ import asyncio
 import os
 import time
 
-from twitchio.ext import commands
-
 import vote_redis
+from twitchio.ext import commands
 
 
 @commands.core.cog(name="VoteCog")

@@ -1,0 +1,47 @@
+#content {
+    margin-left: 200px;
+}
+
+.w3-haugedark {
+    background: #222222;
+    color: #fca4ba;
+}
+
+.w3-haugepink {
+    background: #fca4ba;
+    color: #000e47;
+}
+
+.w3-haugepinkdark {
+    background: #f65656;
+}
+
+.w3-haugeblue {
+    background: #000e47;
+}
+
+.w3-haugepink:hover {
+    background: #f65656 !important;
+    color: #000e47;
+}
+
+#logo {
+    max-width: 100%;
+}
+
+.w3-form-container {
+    margin-right: 50px;
+}
+
+.w3-display-topright .w3-button {
+    margin-right: 1em;
+}
+
+.w3-card {
+    margin-bottom: 20px;
+}
+
+textarea {
+    max-height: 62px;
+    resize: none;
+}

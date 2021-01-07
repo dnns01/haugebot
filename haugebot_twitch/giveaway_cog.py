@@ -5,7 +5,7 @@ from twitchio.ext import commands
 
 
 @commands.core.cog(name="GiveawayCog")
-class GiveawayGog:
+class GiveawayCog:
     def __init__(self, bot):
         self.bot = bot
         self.giveaway_enabled = False

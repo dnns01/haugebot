@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {% if form %}
+            <div class="w3-card w3-white w3-display-container">
+                <div class="w3-container w3-form-container">
+                    {{ form.non_field_errors }}
+                    {% for field in form %}
+                        <p>
+                            {{ field.errors }}
+                            {{ field.label_tag }}
+                            {{ field }}
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="w3-card w3-white w3-display-container">
+                <div class="w3-container w3-form-container">
+                    {{ form.non_field_errors }}
+                    {% for field in form %}
+                        <p>
+                            {{ field.errors }}
+                            {{ field }}
+                            {% if field.widget_type == "checkbox" %}
+                                {{ field.label_tag }}
+                            {% endif %}
+                        </p>
+                    {% endfor %}
+                </div>
+                {% if form.fields.id.initial %}
+                    <div class="w3-display-topright">
+                        <p><a href="{% url remove_url form.fields.id.initial %}" class="w3-button w3-haugepink"><i
+                                class="fas fa-trash-alt"></i></a></p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        <input type="submit" value="Add/Save" class="w3-button w3-haugepink w3-block">
+    </form>
+
+    <script>
+        color_field_options = document.querySelectorAll("#id_color_field option");
+        color_field_options.forEach(value => {
+            value.style = "background: " + value.getAttribute("value") + ";"
+        })
+    </script>
+{% endblock %}
