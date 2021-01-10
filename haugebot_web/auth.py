@@ -4,7 +4,7 @@ from .models import TwitchUser
 
 
 class TwitchAuthenticationBackend(BaseBackend):
-    def authenticated(self, request, user) -> TwitchUser:
+    def authenticate(self, request, user) -> TwitchUser:
         find_user = TwitchUser.objects.filter(id=user['id'])
         if len(find_user) == 0:
             TwitchUser.objects.create_new_twitch_user(user)

@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOST1"), os.getenv("DJANGO_ALLOWED_HOST2"), "127.0.0.1"]
 
 AUTHENTICATION_BACKENDS = [
     'haugebot_web.auth.TwitchAuthenticationBackend',
@@ -123,3 +123,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = 'static/'
