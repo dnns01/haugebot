@@ -59,9 +59,8 @@ def wusstest_du_schon_remove(request, id):
 
 
 def login(request):
-    referer = request.headers["Referer"]
     client_id = os.getenv("CLIENT_ID")
-    redirect_uri = referer + os.getenv("REDIRECT_URI")
+    redirect_uri = os.getenv("REDIRECT_URI")
     url = f"https://id.twitch.tv/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=moderation:read"
     return redirect(url)
 
@@ -72,9 +71,8 @@ def logout(request):
 
 
 def login_redirect(request):
-    referer = request.headers["Referer"]
     code = request.GET.get('code')
-    user = exchange_code(code, referer)
+    user = exchange_code(code)
     if user:
         twitch_user = authenticate(request, user=user)
         twitch_user = list(twitch_user).pop()
@@ -83,10 +81,10 @@ def login_redirect(request):
     return redirect("/")
 
 
-def exchange_code(code, referer):
+def exchange_code(code):
     client_id = os.getenv("CLIENT_ID")
     client_secret = os.getenv("CLIENT_SECRET")
-    redirect_uri = referer + os.getenv("REDIRECT_URI")
+    redirect_uri = os.getenv("REDIRECT_URI")
     url = f"https://id.twitch.tv/oauth2/token?client_id={client_id}&client_secret={client_secret}&code={code}&grant_type=authorization_code&redirect_uri={redirect_uri}"
     response = requests.post(url)
     if response.status_code == 200:
