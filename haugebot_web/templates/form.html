@@ -1,52 +1,40 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-    <form method="post">
-        {% csrf_token %}
-        {% if form %}
-            <div class="w3-card w3-white w3-display-container">
-                <div class="w3-container w3-form-container">
-                    {{ form.non_field_errors }}
-                    {% for field in form %}
-                        <p>
-                            {{ field.errors }}
-                            {{ field.label_tag }}
-                            {{ field }}
-                        </p>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endif %}
-        {{ formset.management_form }}
-        {% for form in formset %}
-            <div class="w3-card w3-white w3-display-container">
-                <div class="w3-container w3-form-container">
-                    {{ form.non_field_errors }}
-                    {% for field in form %}
-                        <p>
-                            {{ field.errors }}
-                            {{ field }}
-                            {% if field.widget_type == "checkbox" %}
-                                {{ field.label_tag }}
-                            {% endif %}
-                        </p>
-                    {% endfor %}
-                </div>
-                {% if form.fields.id.initial %}
-                    <div class="w3-display-topright">
-                        <p><a href="{% url remove_url form.fields.id.initial %}" class="w3-button w3-haugepink"><i
-                                class="fas fa-trash-alt"></i></a></p>
+    {% if forms|length > 1 %}
+        <div class="w3-row w3-display-container w3-bottombar">
+            {% for title, form in forms.items %}
+                <a href="#">
+                    <div id="tablink_{{ title|cut:' ' }}"
+                         class="w3-col s3 l3 m3 tablink w3-hover-haugepink w3-padding {% if form.name == active %}active{% endif %}">
+                        {{ title }}
                     </div>
-                {% endif %}
-            </div>
-        {% endfor %}
-        <input type="submit" value="Add/Save" class="w3-button w3-haugepink w3-block">
-    </form>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
 
-    <script>
-        color_field_options = document.querySelectorAll("#id_color_field option");
-        color_field_options.forEach(value => {
-            value.style = "background: " + value.getAttribute("value") + ";"
-        })
-    </script>
+    {% for title, form in forms.items %}
+        <div class="w3-container form" id="{{ title|cut:' ' }}"
+             style="{% if form.name != active %}display:none; {% endif %}">
+            <form method="post">
+                <input type="hidden" id="id-active" value="{{ form.name }}" name="form-active"/>
+                {% csrf_token %}
+                {% if form.display == "list" %}
+                    {% if form.type == "form" %}
+                        {% include 'list_form.html' %}
+                    {% elif form.type == "formset" %}
+                        {% include 'list_formset.html' %}
+                    {% endif %}
+                {% elif form.display == "card" %}
+                    {% if form.type == "form" %}
+                        {% include 'card_form.html' %}
+                    {% elif form.type == "formset" %}
+                        {% include 'card_formset.html' %}
+                    {% endif %}
+                {% endif %}
+                <input type="submit" value="Add/Save" class="w3-button w3-haugepink w3-block">
+            </form>
+        </div>
+    {% endfor %}
 {% endblock %}

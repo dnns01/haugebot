@@ -76,9 +76,6 @@ def get_date():
 
 
 def is_mod(user, broadcaster):
-    if user.id == broadcaster.id:
-        return True
-
     response = requests.get(
         f"https://api.twitch.tv/helix/moderation/moderators?broadcaster_id={broadcaster.id}&user_id={user.id}",
         headers={

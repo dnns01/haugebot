@@ -15,7 +15,7 @@ class BaseForm(forms.ModelForm):
             field.widget.attrs['placeholder'] = field.label
 
 
-class WusstestDuSchonSettingsForm(forms.Form):
+class WusstestDuSchonConfigForm(forms.Form):
     prefix_field = forms.CharField(max_length=50, initial=Setting.objects.get(key="WusstestDuSchonPrefix").value,
                                    label="Präfix")
     loop_field = forms.IntegerField(initial=Setting.objects.get(key="WusstestDuSchonLoop").value,
@@ -24,7 +24,7 @@ class WusstestDuSchonSettingsForm(forms.Form):
                                     label="Text Farbe")
 
     def __init__(self, *args, **kwargs):
-        super(WusstestDuSchonSettingsForm, self).__init__(*args, **kwargs)
+        super(WusstestDuSchonConfigForm, self).__init__(*args, **kwargs)
 
         self.fields["prefix_field"].initial = Setting.objects.get(key="WusstestDuSchonPrefix").value
         self.fields["loop_field"].initial = Setting.objects.get(key="WusstestDuSchonLoop").value
@@ -38,6 +38,8 @@ class WusstestDuSchonSettingsForm(forms.Form):
             else:
                 field.widget.attrs['class'] = ' w3-input '
             field.widget.attrs['placeholder'] = field.label
+
+        self.fields["color_field"].widget.attrs['class'] += ' color-select '
 
     def save(self):
         prefix = Setting.objects.get(key="WusstestDuSchonPrefix")

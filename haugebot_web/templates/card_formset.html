@@ -1,0 +1,30 @@
+{{ form.formset.management_form }}
+{% for formset_form in form.formset %}
+    <div class="w3-card w3-white w3-display-container">
+        <div class="w3-container w3-form-container">
+            {{ formset_form.non_field_errors }}
+            {% for field in formset_form %}
+                <p>
+                    {{ field.errors }}
+                    {% if field.widget_type == "checkbox" %}
+                        <label class="switch">
+                            {{ field }}
+                            <span class="slider"></span>
+                        </label>
+                        {{ field.label_tag }}
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+
+                </p>
+            {% endfor %}
+        </div>
+        {% if formset_form.fields.id.initial %}
+            <div class="w3-display-topright">
+                <p><a href="{% url form.remove_url formset_form.fields.id.initial %}"
+                      class="w3-button w3-haugepink"><i
+                        class="fas fa-trash-alt"></i></a></p>
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}

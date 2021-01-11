@@ -1,28 +1,44 @@
+:root {
+    --haugepink: #fca4ba;
+    --haugepinkdark: #f65656;
+    --haugeblue: #000e47;
+    --haugedarkgray: #222222;
+}
+
+
 #content {
     margin-left: 200px;
 }
 
 .w3-haugedark {
-    background: #222222;
-    color: #fca4ba;
+    background: var(--haugedarkgray);
+    color: var(--haugepink);
 }
 
 .w3-haugepink {
-    background: #fca4ba;
-    color: #000e47;
+    background: var(--haugepink);
+    color: var(--haugeblue);
 }
 
 .w3-haugepinkdark {
-    background: #f65656;
+    background: var(--haugeblue);
 }
 
 .w3-haugeblue {
-    background: #000e47;
+    background: var(--haugeblue);
 }
 
 .w3-haugepink:hover {
-    background: #f65656 !important;
-    color: #000e47;
+    background: var(--haugepinkdark) !important;
+    color: var(--haugeblue);
+}
+
+.w3-hover-haugepink:hover {
+    background: var(--haugepinkdark) !important;
+}
+
+.w3-hover-haugepink.active {
+    background: var(--haugepink) !important;
 }
 
 #logo {
@@ -44,4 +60,68 @@
 textarea {
     max-height: 62px;
     resize: none;
+}
+
+.w3-bottombar {
+    border-bottom: 6px solid var(--haugeblue) !important;
+}
+
+.w3-container.form {
+    padding: 0;
+}
+
+.tablink {
+    text-align: center;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* The slider */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14.5px;
+    width: 14.5px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--haugepinkdark);
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: var(--haugeblue);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--haugeblue);
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(17.5px);
+    -ms-transform: translateX(17.5px);
+    transform: translateX(17.5px);
 }

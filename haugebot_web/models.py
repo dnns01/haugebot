@@ -32,14 +32,18 @@ class TwitchUser(models.Model):
     access_token = models.CharField(max_length=50)
     refresh_token = models.CharField(max_length=50)
     last_login = models.DateTimeField(null=True)
+    admin = models.BooleanField(default=False)
 
     def update_tokens(self, access_token, refresh_token):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.save()
 
+    @property
     def is_authenticated(self):
-        broadcaster_id = os.getenv("BROADCASTER_ID")
+        broadcaster_id = int(os.getenv("BROADCASTER_ID"))
+        if self.id == broadcaster_id or self.admin:
+            return True
         try:
             broadcaster = TwitchUser.objects.get(pk=broadcaster_id)
             return twitch_api.is_mod(self, broadcaster)

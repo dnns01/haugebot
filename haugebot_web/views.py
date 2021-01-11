@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect
 
-from .forms import BaseForm, WusstestDuSchonSettingsForm
+from .forms import BaseForm, WusstestDuSchonConfigForm
 from .models import WusstestDuSchon
 
 
@@ -20,20 +20,35 @@ def wusstest_du_schon(request):
     WusstestDuSchonFormSet = modelformset_factory(WusstestDuSchon, form=BaseForm,
                                                   fields=('advertised_command', 'text', 'use_prefix', 'active'),
                                                   field_classes=[''])
+    active = "config"
+    form = None
+
     if request.method == "POST":
-        settings_form = WusstestDuSchonSettingsForm(request.POST)
-        formset = WusstestDuSchonFormSet(request.POST, request.FILES)
-        if formset.is_valid():
-            formset.save()
-        if settings_form.is_valid():
-            settings_form.save()
+        active = request.POST["form-active"]
 
-    formset = WusstestDuSchonFormSet()
-    settings_form = WusstestDuSchonSettingsForm()
+        if active == "config":
+            form = WusstestDuSchonConfigForm(request.POST)
+        elif active == "wusstestdu":
+            form = WusstestDuSchonFormSet(request.POST, request.FILES)
 
-    return render(request, "form.html",
-                  {'title': 'Wusstest du Schon?', 'formset': formset, 'remove_url': 'wusstest_du_schon_remove',
-                   'form': settings_form})
+        if form and form.is_valid():
+            form.save()
+
+    forms = {"Konfiguration": {
+        "display": "card",
+        'type': 'form',
+        'name': 'config',
+        'form': WusstestDuSchonConfigForm()},
+        "Texte": {
+            'display': 'card',
+            'type': 'formset',
+            'name': 'wusstestdu',
+            'formset': WusstestDuSchonFormSet(),
+            'remove_url': 'wusstest_du_schon_remove',
+        },
+    }
+
+    return render(request, "form.html", {'title': 'Wusstest du Schon?', 'forms': forms, 'active': active})
 
 
 @login_required(login_url="/login")

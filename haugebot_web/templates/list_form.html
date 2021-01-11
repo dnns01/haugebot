@@ -1,0 +1,17 @@
+<ul class="w3-ul w3-card-4 w3-white">
+    {{ form.form.non_field_errors }}
+    {% for field in form.form %}
+        <li class="w3-bar">
+            {{ field.errors }}
+            {% if field.widget_type == "checkbox" %}
+                <label class="switch">
+                    {{ field }}
+                    <span class="slider"></span>
+                </label>
+                {{ field.label_tag }}
+            {% else %}
+                {{ field }}
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
