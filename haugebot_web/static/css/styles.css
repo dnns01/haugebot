@@ -70,6 +70,10 @@ textarea {
     padding: 0;
 }
 
+#content > .w3-container:last-child {
+    margin-bottom: 16px;
+}
+
 .tablink {
     text-align: center;
 }
