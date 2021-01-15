@@ -2,6 +2,7 @@ import asyncio
 import random
 import sqlite3
 
+import config
 from twitchio.ext import commands
 
 
@@ -12,13 +13,13 @@ class InfoCog:
 
     async def info_loop(self):
         while True:
-            sleep_duration = int(self.bot.get_setting("WusstestDuSchonLoop"))
+            sleep_duration = config.get_int("WusstestDuSchonLoop")
             await asyncio.sleep(sleep_duration * 60)
 
             if await self.bot.stream():
                 channel = self.bot.channel()
-                color = self.bot.get_setting("WusstestDuSchonColor")
-                prefix = self.bot.get_setting("WusstestDuSchonPrefix")
+                color = config.get_value("WusstestDuSchonColor")
+                prefix = config.get_value("WusstestDuSchonPrefix")
                 message = self.get_random_message(prefix)
                 await self.bot.send_me(channel, message, color)
 

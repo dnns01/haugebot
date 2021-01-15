@@ -1,21 +1,18 @@
 import asyncio
+import logging
 import os
 import sqlite3
 from abc import ABC
 
 from dotenv import load_dotenv
 from giveaway_cog import GiveawayCog
-# from giveaway_cog import GiveawayGog
 from info_cog import InfoCog
 from pipi_cog import PipiCog
 from twitchio.dataclasses import Context, Message, Channel
 from twitchio.ext import commands
 from vote_cog import VoteCog
 
-# from pipi_cog import PipiCog
-# from vote_cog import VoteCog
-
-# logging.basicConfig(level=logging.INFO, filename='hausgeist.log')
+logging.basicConfig(level=logging.INFO, filename='hausgeist.log')
 
 load_dotenv()
 IRC_TOKEN = os.getenv("IRC_TOKEN")

@@ -24,6 +24,10 @@ class WusstestDuSchon(models.Model):
     active = models.BooleanField(default=True, verbose_name="Aktiv")
 
 
+class Pipimeter(models.Model):
+    user = models.CharField(max_length=25, unique=True)
+
+
 class TwitchUser(models.Model):
     objects = TwitchUserManager()
 
