@@ -34,11 +34,11 @@ class HaugeBot(commands.Bot, ABC):
         super().__init__(irc_token=IRC_TOKEN, prefix=PREFIX, nick=NICK, initial_channels=[CHANNEL], client_id=CLIENT_ID,
                          client_secret=CLIENT_SECRET)
         self.info_cog = InfoCog(self)
-        self.pipi_cog = PipiCog(self)
+        # self.pipi_cog = PipiCog(self)
         self.add_cog(GiveawayCog(self))
         self.add_cog(VoteCog(self))
         self.add_cog(self.info_cog)
-        self.add_cog(self.pipi_cog)
+        # self.add_cog(self.pipi_cog)
 
     @staticmethod
     async def send_me(ctx, content, color):
@@ -54,8 +54,9 @@ class HaugeBot(commands.Bot, ABC):
     async def event_ready(self):
         print('Logged in')
 
+        self.info_cog.start_info_loop()
         asyncio.create_task(self.info_cog.info_loop())
-        asyncio.create_task(self.pipi_cog.pipimeter_loop())
+        # asyncio.create_task(self.pipi_cog.pipimeter_loop())
 
     @staticmethod
     def get_percentage(part, total):

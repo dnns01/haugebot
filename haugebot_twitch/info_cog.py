@@ -11,6 +11,10 @@ class InfoCog:
     def __init__(self, bot):
         self.bot = bot
 
+    def start_info_loop(self):
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.info_loop())
+
     async def info_loop(self):
         while True:
             sleep_duration = config.get_int("WusstestDuSchonLoop")
