@@ -88,7 +88,10 @@ def is_mod(user, broadcaster):
             return False
         return is_mod(user, broadcaster)
 
-    return response.json().get("data") is not None
+    if data := response.json().get("data"):
+        return len(data) > 0
+    else:
+        return False
 
 
 def refresh_access_token(broadcaster):
