@@ -37,6 +37,9 @@ class VoteCog(commands.Cog):
             self.vote_blocked = None
 
     async def notify_vote_result(self, message, final_result=False):
+        if len(self.votes) < self.MIN_VOTES:
+            return
+
         votes_list = self.get_votes()
 
         output = f'{self.PLUS} {votes_list[0][0]} ({votes_list[0][1]}%), ' \
