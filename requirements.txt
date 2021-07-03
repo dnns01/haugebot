@@ -12,7 +12,7 @@ pytz==2020.5
 redis==3.5.3
 requests==2.25.1
 sqlparse==0.4.1
-twitchio==1.1.0
+twitchio==2.0.0b7
 typing-extensions==3.7.4.3
 urllib3==1.26.2
 websockets==8.1

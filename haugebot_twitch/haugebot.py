@@ -1,29 +1,16 @@
-import asyncio
-import logging
 import os
 import sqlite3
 from abc import ABC
 
 from dotenv import load_dotenv
-from giveaway_cog import GiveawayCog
-from info_cog import InfoCog
-from pipi_cog import PipiCog
-from twitchio.dataclasses import Context, Message, Channel
-from twitchio.ext import commands
+from twitchio.ext.commands import Context, Bot
+from twitchio import Channel, Message
+
 from vote_cog import VoteCog
-
-logging.basicConfig(level=logging.INFO, filename='hausgeist.log')
-
-load_dotenv()
-IRC_TOKEN = os.getenv("IRC_TOKEN")
-CLIENT_ID = os.getenv("CLIENT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-NICK = os.getenv("NICK")
-CHANNEL = os.getenv("CHANNEL")
-PREFIX = os.getenv("PREFIX")
+from wusstest_du_schon import WusstestDuSchon
 
 
-class HaugeBot(commands.Bot, ABC):
+class HaugeBot(Bot, ABC):
     def __init__(self):
         self.IRC_TOKEN = os.getenv("IRC_TOKEN")
         self.CLIENT_ID = os.getenv("CLIENT_ID")
@@ -31,32 +18,28 @@ class HaugeBot(commands.Bot, ABC):
         self.NICK = os.getenv("NICK")
         self.CHANNEL = os.getenv("CHANNEL")
         self.PREFIX = os.getenv("PREFIX")
-        super().__init__(irc_token=IRC_TOKEN, prefix=PREFIX, nick=NICK, initial_channels=[CHANNEL], client_id=CLIENT_ID,
-                         client_secret=CLIENT_SECRET)
-        self.info_cog = InfoCog(self)
-        # self.pipi_cog = PipiCog(self)
-        self.add_cog(GiveawayCog(self))
+        super().__init__(token=self.IRC_TOKEN, prefix=self.PREFIX, nick=self.NICK, initial_channels=[self.CHANNEL],
+                         client_id=self.CLIENT_ID,
+                         client_secret=self.CLIENT_SECRET)
         self.add_cog(VoteCog(self))
-        self.add_cog(self.info_cog)
-        # self.add_cog(self.pipi_cog)
+        self.add_cog(WusstestDuSchon(self))
 
     @staticmethod
-    async def send_me(ctx, content, color):
+    async def send_me(ctx, content):
         """ Change Text color to color and send content as message """
 
         if type(ctx) is Context or type(ctx) is Channel:
-            await ctx.color(color)
-            await ctx.send_me(content)
+            await ctx.send(f".me {content}")
         elif type(ctx) is Message:
-            await ctx.channel.color(color)
-            await ctx.channel.send_me(content)
+            await ctx.channel.send(f".me {content}")
 
     async def event_ready(self):
         print('Logged in')
 
-        self.info_cog.start_info_loop()
-        asyncio.create_task(self.info_cog.info_loop())
-        # asyncio.create_task(self.pipi_cog.pipimeter_loop())
+        if wusstest_du_schon := self.cogs.get("WusstestDuSchon"):
+            wusstest_du_schon.loop.start(wusstest_du_schon)
+        if vote_cog := self.cogs.get("VoteCog"):
+            vote_cog.manage_vote.start(vote_cog)
 
     @staticmethod
     def get_percentage(part, total):
@@ -73,7 +56,7 @@ class HaugeBot(commands.Bot, ABC):
         return await self.get_chatters(self.CHANNEL)
 
     async def stream(self):
-        return await self.get_stream(self.CHANNEL)
+        return await self._http.get_streams(user_logins=[self.CHANNEL])
 
     @staticmethod
     def get_setting(key):
@@ -86,6 +69,7 @@ class HaugeBot(commands.Bot, ABC):
         return value
 
 
+load_dotenv()
 bot = HaugeBot()
 
 

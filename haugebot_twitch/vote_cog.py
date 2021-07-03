@@ -1,28 +1,40 @@
 import asyncio
 import os
-import time
+from datetime import datetime, timedelta
 
 import vote_redis
-from twitchio.ext import commands
+from twitchio.ext import commands, routines
 
 
-@commands.core.cog(name="VoteCog")
-class VoteCog:
+class VoteCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.DELAY_END = int(os.getenv("VOTE_DELAY_END"))
         self.DELAY_INTERIM = int(os.getenv("VOTE_DELAY_INTERIM"))
         self.MIN_VOTES = int(os.getenv("VOTE_MIN_VOTES"))
-        self.COLOR = os.getenv("VOTE_COLOR")
         self.PLUS = os.getenv("VOTE_PLUS")
         self.MINUS = os.getenv("VOTE_MINUS")
         self.NEUTRAL = os.getenv("VOTE_NEUTRAL")
-        self.vote_end_task = None
-        self.vote_interim_task = None
-        self.vote_task_new = None
+        self.next_interim = None
+        self.vote_end = None
+        self.vote_blocked = None
         self.votes = {}
-        self.bot.add_listener(self.event_message)
         self.redis = vote_redis.VoteRedis()
+
+    @routines.routine(seconds=1)
+    async def manage_vote(self):
+        if len(self.votes) > 0:
+            if datetime.now() >= self.vote_end:
+                await self.notify_vote_result(self.bot.channel(), final_result=True)
+                self.votes.clear()
+                self.update_redis()
+                self.vote_blocked = datetime.now() + timedelta(seconds=self.DELAY_INTERIM)
+                return
+            if datetime.now() >= self.next_interim:
+                await self.notify_vote_result(self.bot.channel())
+                self.next_interim = self.calc_next_interim()
+        if self.vote_blocked and datetime.now() >= self.vote_blocked:
+            self.vote_blocked = None
 
     async def notify_vote_result(self, message, final_result=False):
         votes_list = self.get_votes()
@@ -33,39 +45,7 @@ class VoteCog:
         output += f'Endergebnis' if final_result else f'Zwischenergebnis'
         output += f' mit insgesamt {len(self.votes)} abgegebenen Stimmen'
 
-        await self.bot.send_me(message, output, self.COLOR)
-
-    async def vote_end_voting(self, channel):
-        """ End a currently open voting """
-
-        # Wait for the initial VOTE_DELAY_END seconds
-        await asyncio.sleep(self.DELAY_END)
-
-        # Check every second, if the delay has finished, because since VOTE_DELAY_END seconds there was no vote,
-        # that extended the voting time
-        while int(self.vote_end_task.get_name()) + self.DELAY_END >= time.time():
-            await asyncio.sleep(1)
-
-        if len(self.votes) >= self.MIN_VOTES:
-            await self.notify_vote_result(channel, final_result=True)
-
-        self.votes.clear()
-        self.vote_task_new = asyncio.create_task(self.vote_block_votes())
-        self.update_redis()
-
-    async def vote_interim_voting(self, channel):
-        """ End a currently open voting """
-
-        await asyncio.sleep(self.DELAY_INTERIM)
-        if not self.vote_end_task.done() and len(self.votes) >= self.MIN_VOTES:
-            await self.notify_vote_result(channel)
-            self.vote_interim_task = asyncio.create_task(
-                self.vote_interim_voting(self.bot.channel()))
-
-    async def vote_block_votes(self):
-        """ Just do nothing but sleep for VOTE_DELAY_INTERIM seconds """
-
-        await asyncio.sleep(self.DELAY_INTERIM)
+        await self.bot.send_me(message, output)
 
     def get_votes(self):
         """analyzes the votes-dict and counts the votes"""
@@ -86,9 +66,10 @@ class VoteCog:
                 [neutral, self.bot.get_percentage(neutral, len(self.votes))],
                 [minus, self.bot.get_percentage(minus, len(self.votes))]]
 
+    @commands.Cog.event()
     async def event_message(self, message):
         # make sure the bot ignores itself and nightbot
-        if message.author.name.lower() in [self.bot.NICK.lower(), 'nightbot']:
+        if not message.author or message.author.name.lower() in [self.bot.NICK.lower(), 'nightbot']:
             return
 
         # check if message is a vote
@@ -105,21 +86,25 @@ class VoteCog:
         """adds votes to the votes-dict and sets timestamps"""
 
         # Delay between two votes is not yet finished. So votes are not counted.
-        if self.vote_task_new and not self.vote_task_new.done():
+        if self.vote_blocked:
             return
 
         if len(self.votes) == 0:
-            self.vote_end_task = asyncio.create_task(self.vote_end_voting(self.bot.channel()))
-            self.vote_interim_task = asyncio.create_task(
-                self.vote_interim_voting(self.bot.channel()))
+            self.next_interim = self.calc_next_interim()
 
         # should vote extend voting?
         if ctx.author.name not in self.votes or self.votes[ctx.author.name] != votetype:
-            self.vote_end_task.set_name(int(time.time()))
+            self.vote_end = self.calc_vote_end()
 
         # add vote to dict
         self.votes[ctx.author.name] = votetype
         self.update_redis()
+
+    def calc_next_interim(self):
+        return datetime.now() + timedelta(seconds=self.DELAY_INTERIM)
+
+    def calc_vote_end(self):
+        return datetime.now() + timedelta(seconds=self.DELAY_END)
 
     def update_redis(self):
         """analyzes the votes-dict and counts the votes"""
