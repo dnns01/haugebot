@@ -14,6 +14,6 @@ requests==2.25.1
 sqlparse==0.4.1
 twitchio==2.0.0b7
 typing-extensions==3.7.4.3
-urllib3==1.26.2
+urllib3==1.26.5
 websockets==8.1
 yarl==1.6.3
