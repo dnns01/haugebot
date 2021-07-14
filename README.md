@@ -22,4 +22,4 @@ Clone this repository, create a venv and install dependencies using `pip` and th
 
 ### Configuration
 
-Configuration of this bot is done by a `.env` use `.env.template` for reference
+Configuration of this bot is done by a `.env`. Use `.env.template` for reference
