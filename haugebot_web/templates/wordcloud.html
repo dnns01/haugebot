@@ -1,0 +1,89 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="w3-row w3-display-container w3-bottombar">
+        <a href="#">
+            <div id="tablink_filter"
+                 class="w3-col s3 l3 m3 tablink w3-hover-haugepink w3-padding active">
+                Filter
+            </div>
+        </a>
+        <!--
+        <a href="#">
+            <div id="tablink_all"
+                 class="w3-col s3 l3 m3 tablink w3-hover-haugepink w3-padding">
+                Alle Wordclouds
+            </div>
+        </a>
+        -->
+    </div>
+
+    <div class="w3-container w3-card-4 w3-white" id="filter">
+        {% if user.is_broadcaster %}
+            <h3>OBS Browser Source URL: {{ embed_link }}</h3>
+            <hr>
+        {% endif %}
+        <h3>Freigegeben</h3>
+        <ul class="w3-ul" id="permitted">
+        </ul>
+        <hr/>
+        <h3>Noch nicht freigegeben</h3>
+        <ul class="w3-ul" id="not-permitted">
+        </ul>
+    </div>
+    <div class="w3-container form" id="all"
+         style="display:none;">
+        <form method="post">
+            <input type="hidden" id="id-active" value="{{ form.name }}" name="form-active"/>
+            {% csrf_token %}
+            {% if form.display == "list" %}
+                {% if form.type == "form" %}
+                    {% include 'list_form.html' %}
+                {% elif form.type == "formset" %}
+                    {% include 'list_formset.html' %}
+                {% endif %}
+            {% elif form.display == "card" %}
+                {% if form.type == "form" %}
+                    {% include 'card_form.html' %}
+                {% elif form.type == "formset" %}
+                    {% include 'card_formset.html' %}
+                {% endif %}
+            {% endif %}
+            <input type="submit" value="Add/Save" class="w3-button w3-haugepink w3-block">
+        </form>
+    </div>
+    <script type="text/javascript">
+        ws = new WebSocket("{{ ws_url }}");
+        let permitted = document.querySelector("#permitted");
+        let notPermitted = document.querySelector("#not-permitted");
+        let session_key = "{{ session_key }}";
+
+        ws.onmessage = function (event) {
+            data = JSON.parse(event.data);
+            permitted.querySelectorAll('*').forEach(n => n.remove());
+            notPermitted.querySelectorAll('*').forEach(n => n.remove());
+            for (word in data.words) {
+                li = document.createElement("li");
+                li.classList.add("w3-hover-haugepink-light");
+                li.textContent = word;
+
+
+                if (data.permitted.includes(word)) {
+                    li.addEventListener("click", ev => {
+                        word = ev.target.textContent;
+                        message = {"type": "deny", "word": word, "session_key": session_key};
+                        ws.send(JSON.stringify(message));
+                    });
+                    permitted.append(li);
+                } else {
+                    li.addEventListener("click", ev => {
+                        word = ev.target.textContent;
+                        message = {"type": "permit", "word": word, "session_key": session_key};
+                        ws.send(JSON.stringify(message));
+                    });
+                    notPermitted.append(li);
+                }
+            }
+        }
+    </script>
+{% endblock %}

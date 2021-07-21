@@ -37,6 +37,10 @@
     background: var(--haugepinkdark) !important;
 }
 
+.w3-hover-haugepink-light:hover {
+    background: var(--haugepink) !important;
+}
+
 .w3-hover-haugepink.active {
     background: var(--haugepink) !important;
 }

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Wordcloud</title>
+</head>
+<body style="margin: 0; padding: 0; background: black">
+<img style="width: 100vw; height: 100vh; object-fit: contain; display: none;" src="#" id="wordcloud_img"/>
+
+</body>
+<script>
+    ws = new WebSocket("{{ ws_url }}");
+
+    ws.onmessage = function (event) {
+        let data = JSON.parse(event.data);
+        let img = document.querySelector("#wordcloud_img")
+        if (Object.keys(data.permitted).length == 0) {
+            img.style.display = "none";
+        } else {
+            img.style.display = "block";
+            img.setAttribute("src", "/media/" + data.uuid + ".png?t=" + new Date().getTime())
+        }
+    }
+</script>
+</html>

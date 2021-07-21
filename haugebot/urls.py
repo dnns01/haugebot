@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 
 from haugebot_web import views
 
@@ -26,4 +28,10 @@ urlpatterns = [
     path('login/redirect/', views.login_redirect, name="login_redirect"),
     path('wusstest_du_schon/', views.wusstest_du_schon, name="wusstest_du_schon"),
     path('wusstest_du_schon/remove/<int:id>', views.wusstest_du_schon_remove, name="wusstest_du_schon_remove"),
+    path('wordcloud/', views.wordcloud, name="wordcloud"),
+    path('wordcloud/live/<str:id>', views.wordcloud_live, name="wordcloud_live")
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)

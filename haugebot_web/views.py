@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login as django_login, logout as d
 from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect
+from django.urls import reverse
 
 from .forms import BaseForm, WusstestDuSchonConfigForm
 from .models import WusstestDuSchon
@@ -56,6 +57,19 @@ def wusstest_du_schon_remove(request, id):
     WusstestDuSchon.objects.filter(pk=id).delete()
 
     return redirect("/wusstest_du_schon")
+
+
+@login_required(login_url="/login")
+def wordcloud(request):
+    id = os.getenv("DJANGO_WORDCLOUD_LIVE_ID")
+    embed_link = f"{request.scheme}://{request.headers['Host']}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
+    return render(request, "wordcloud.html", {'title': 'Wordcloud', "ws_url": os.getenv("WORDCLOUD_WS_URL"),
+                                              "session_key": request.session.session_key, "embed_link": embed_link})
+
+
+def wordcloud_live(request, id):
+    if id == os.getenv("DJANGO_WORDCLOUD_LIVE_ID"):
+        return render(request, "live-wordcloud.html", {"ws_url": os.getenv("WORDCLOUD_WS_URL")})
 
 
 def login(request):

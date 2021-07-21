@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'haugebot_web',
 ]
 
@@ -76,7 +77,15 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'haugebot.wsgi.application'
+ASGI_APPLICATION = 'haugebot.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        }
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
@@ -124,3 +133,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = 'media/'

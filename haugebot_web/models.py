@@ -45,11 +45,20 @@ class TwitchUser(models.Model):
 
     @property
     def is_authenticated(self):
-        broadcaster_id = int(os.getenv("BROADCASTER_ID"))
-        if self.id == broadcaster_id or self.admin:
-            return True
+        return self.is_broadcaster or self.is_admin or self.is_mod
+
+    @property
+    def is_broadcaster(self):
+        return self.id == int(os.getenv("BROADCASTER_ID"))
+
+    @property
+    def is_mod(self):
+        return self.admin
+
+    @property
+    def is_mod(self):
         try:
-            broadcaster = TwitchUser.objects.get(pk=broadcaster_id)
+            broadcaster = TwitchUser.objects.get(pk=int(os.getenv("BROADCASTER_ID")))
             return twitch_api.is_mod(self, broadcaster)
         except TwitchUser.DoesNotExist:
             return False

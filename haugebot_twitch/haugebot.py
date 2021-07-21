@@ -8,6 +8,7 @@ from twitchio import Channel, Message
 
 from vote_cog import VoteCog
 from wusstest_du_schon import WusstestDuSchon
+from wordcloud import Wordcloud
 
 
 class HaugeBot(Bot, ABC):
@@ -23,6 +24,7 @@ class HaugeBot(Bot, ABC):
                          client_secret=self.CLIENT_SECRET)
         self.add_cog(VoteCog(self))
         self.add_cog(WusstestDuSchon(self))
+        self.add_cog(Wordcloud(self))
 
     @staticmethod
     async def send_me(ctx, content):
