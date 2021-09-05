@@ -1,7 +1,6 @@
 import json
 import os
 
-from django.contrib.sessions.models import Session
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from wordcloud import WordCloud
@@ -19,10 +18,6 @@ def make_image(uuid, words, permitted):
         wc.generate_from_frequencies(permitted_words)
 
         wc.to_file(f"media/{uuid}.png")
-
-
-def verify_session_key(session_key):
-    return len(list(Session.objects.filter(session_key=session_key))) > 0
 
 
 class WordCloudConsumer(WebsocketConsumer):
@@ -62,6 +57,9 @@ class WordCloudConsumer(WebsocketConsumer):
             }
         )
 
+    def verify_session_key(self):
+        return self.scope["session"].session_key is not None
+
     def word_update(self, data):
         global uuid, words, permitted
 
@@ -78,7 +76,7 @@ class WordCloudConsumer(WebsocketConsumer):
             make_image(uuid, words, permitted)
 
     def permit(self, data):
-        if not verify_session_key(data.get("session_key")):
+        if not self.verify_session_key():
             return
         word = data.get("word")
         if word not in permitted:
@@ -86,7 +84,7 @@ class WordCloudConsumer(WebsocketConsumer):
             make_image(uuid, words, permitted)
 
     def deny(self, data):
-        if not verify_session_key(data.get("session_key")):
+        if not self.verify_session_key():
             return
         word = data.get("word")
         if word in permitted:

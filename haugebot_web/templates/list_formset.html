@@ -3,7 +3,7 @@
     {% for formset_form in form.formset %}
         <li class="w3-bar">
             <div class="w3-bar-item w3-form-bar-item" style="width: 100%;">
-                {% if formset_form.fields.id.initial %}
+                {% if formset_form.fields.id.initial and form.remove_url %}
                     <span class="w3-right">
                         <a href="{% url form.remove_url formset_form.fields.id.initial %}"
                            class="w3-button w3-haugepink">

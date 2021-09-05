@@ -3,12 +3,12 @@ import os
 import requests
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.contrib.auth.decorators import login_required
-from django.forms import modelformset_factory
+from django.forms import modelformset_factory, modelform_factory
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
-from .forms import BaseForm, WusstestDuSchonConfigForm
-from .models import WusstestDuSchon
+from .forms import BaseForm
+from .models import WusstestDuSchon, Setting
 
 
 # Create your views here.
@@ -18,9 +18,10 @@ def home(request):
 
 @login_required(login_url="/login")
 def wusstest_du_schon(request):
-    WusstestDuSchonFormSet = modelformset_factory(WusstestDuSchon, form=BaseForm,
-                                                  fields=('advertised_command', 'text', 'use_prefix', 'active'),
-                                                  field_classes=[''])
+    wusstest_du_schon_form_set = modelformset_factory(WusstestDuSchon, form=BaseForm,
+                                                  fields=('advertised_command', 'text', 'use_prefix', 'active'))
+    settings_form = modelform_factory(Setting, form=BaseForm,
+                                     fields=('wusstest_du_schon_prefix', 'wusstest_du_schon_loop'))
     active = "config"
     form = None
 
@@ -28,9 +29,9 @@ def wusstest_du_schon(request):
         active = request.POST["form-active"]
 
         if active == "config":
-            form = WusstestDuSchonConfigForm(request.POST)
+            form = settings_form(request.POST, instance=Setting.objects.first())
         elif active == "wusstestdu":
-            form = WusstestDuSchonFormSet(request.POST, request.FILES)
+            form = wusstest_du_schon_form_set(request.POST, request.FILES)
 
         if form and form.is_valid():
             form.save()
@@ -39,12 +40,13 @@ def wusstest_du_schon(request):
         "display": "card",
         'type': 'form',
         'name': 'config',
-        'form': WusstestDuSchonConfigForm()},
+        'form': settings_form(instance=Setting.objects.first()),
+    },
         "Texte": {
             'display': 'card',
             'type': 'formset',
             'name': 'wusstestdu',
-            'formset': WusstestDuSchonFormSet(),
+            'formset': wusstest_du_schon_form_set(),
             'remove_url': 'wusstest_du_schon_remove',
         },
     }
@@ -59,10 +61,10 @@ def wusstest_du_schon_remove(request, id):
     return redirect("/wusstest_du_schon")
 
 
-@login_required(login_url="/login")
+#@login_required(login_url="/login")
 def wordcloud(request):
     id = os.getenv("DJANGO_WORDCLOUD_LIVE_ID")
-    embed_link = f"{request.scheme}://{request.headers['Host']}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
+    embed_link = "" #f"{request.scheme}://{request.headers['Host']}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
     return render(request, "wordcloud.html", {'title': 'Wordcloud', "ws_url": os.getenv("WORDCLOUD_WS_URL"),
                                               "session_key": request.session.session_key, "embed_link": embed_link})
 

@@ -19,12 +19,12 @@
                 </p>
             {% endfor %}
         </div>
-        {% if formset_form.fields.id.initial %}
-            <div class="w3-display-topright">
-                <p><a href="{% url form.remove_url formset_form.fields.id.initial %}"
-                      class="w3-button w3-haugepink"><i
-                        class="fas fa-trash-alt"></i></a></p>
-            </div>
-        {% endif %}
+            {% if formset_form.fields.id.initial and form.remove_url%}
+                <div class="w3-display-topright">
+                    <p><a href="{% url form.remove_url formset_form.fields.id.initial %}"
+                          class="w3-button w3-haugepink"><i
+                            class="fas fa-trash-alt"></i></a></p>
+                </div>
+            {% endif %}
     </div>
 {% endfor %}

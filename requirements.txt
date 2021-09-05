@@ -42,7 +42,6 @@ service-identity==21.1.0
 six==1.16.0
 sqlparse==0.4.1
 Twisted==21.2.0
-twisted-iocpsupport==1.0.1
 twitchio==2.0.0b7
 txaio==21.2.1
 typing-extensions==3.7.4.3

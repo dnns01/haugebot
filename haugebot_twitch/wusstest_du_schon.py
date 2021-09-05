@@ -9,11 +9,11 @@ class WusstestDuSchon(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @routines.routine(minutes=config.get_int("WusstestDuSchonLoop"))
+    @routines.routine(minutes=config.get_int("wusstest_du_schon_loop"))
     async def loop(self):
         if await self.bot.stream():
             channel = self.bot.channel()
-            prefix = config.get_value("WusstestDuSchonPrefix")
+            prefix = config.get_value("wusstest_du_schon_prefix")
             message = self.get_random_message(prefix)
             await self.bot.send_me(channel, message)
 

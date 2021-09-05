@@ -20,7 +20,9 @@
             <form method="post">
                 <input type="hidden" id="id-active" value="{{ form.name }}" name="form-active"/>
                 {% csrf_token %}
-                {% if form.display == "list" %}
+                {% if form.name == "config" %}
+                    {% include 'settings_formset.html' %}
+                {% elif form.display == "list" %}
                     {% if form.type == "form" %}
                         {% include 'list_form.html' %}
                     {% elif form.type == "formset" %}

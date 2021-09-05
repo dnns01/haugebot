@@ -7,8 +7,8 @@ from .managers import TwitchUserManager
 
 
 class Setting(models.Model):
-    key = models.CharField(max_length=50)
-    value = models.CharField(max_length=50)
+    wusstest_du_schon_prefix = models.CharField(max_length=50, verbose_name="Präfix")
+    wusstest_du_schon_loop = models.PositiveIntegerField(verbose_name="Pause (in Minuten)")
 
 
 class TwitchColor(models.Model):

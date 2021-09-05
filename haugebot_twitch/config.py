@@ -1,24 +1,24 @@
 import sqlite3
 
 
-def get_value(key):
+def get_value(column):
     conn = sqlite3.connect("db.sqlite3")
 
     c = conn.cursor()
-    c.execute('SELECT value from haugebot_web_setting where key = ?', (key,))
+    c.execute(f"SELECT {column} FROM haugebot_web_setting")
     value = c.fetchone()[0]
     conn.close()
 
     return value
 
 
-def get_int(key):
-    return int(get_value(key))
+def get_int(column):
+    return get_value(column)
 
 
-def get_float(key):
-    return float(get_value(key))
+def get_float(column):
+    return get_value(column)
 
 
-def get_bool(key):
-    return get_value(key) == "1"
+def get_bool(column):
+    return get_value(column) == "1"
