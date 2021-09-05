@@ -52,7 +52,7 @@ class TwitchUser(models.Model):
         return self.id == int(os.getenv("BROADCASTER_ID"))
 
     @property
-    def is_mod(self):
+    def is_admin(self):
         return self.admin
 
     @property
