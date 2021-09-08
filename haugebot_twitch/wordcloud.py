@@ -28,8 +28,7 @@ class Wordcloud(commands.Cog):
         try:
             if self.running:
                 if not self.ws or self.ws.closed:
-                    self.ws = await connect(self.ws_url,
-                                            extra_headers=[("sessionid", "aaaso34ko6goc2wczbfjj1njnqo8k89b")])
+                    self.ws = await connect(self.ws_url)
 
                 if self.ws:
                     js = {
