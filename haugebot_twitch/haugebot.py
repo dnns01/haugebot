@@ -1,6 +1,7 @@
 import os
 from abc import ABC
 
+import twitchio
 from dotenv import load_dotenv
 from twitchio import Channel, Message
 from twitchio.ext.commands import Context, Bot
@@ -8,6 +9,10 @@ from twitchio.ext.commands import Context, Bot
 from vote_cog import VoteCog
 from wusstest_du_schon import WusstestDuSchon
 from wordcloud import Wordcloud
+from eventsub_cog import EventSubCog
+
+import logging
+logging.basicConfig(filename="haugebot.log", filemode="w", level=logging.DEBUG, )
 
 
 class HaugeBot(Bot, ABC):
@@ -24,6 +29,7 @@ class HaugeBot(Bot, ABC):
         self.add_cog(VoteCog(self))
         self.add_cog(WusstestDuSchon(self))
         self.add_cog(Wordcloud(self))
+        self.add_cog(EventSubCog(self))
 
     @staticmethod
     async def send_me(ctx, content):
@@ -41,6 +47,8 @@ class HaugeBot(Bot, ABC):
             wusstest_du_schon.loop.start()
         if vote_cog := self.cogs.get("VoteCog"):
             vote_cog.manage_vote.start()
+        if eventsub_cog := self.cogs.get("EventSubCog"):
+            await eventsub_cog.subscribe()
 
     @staticmethod
     def get_percentage(part, total):
