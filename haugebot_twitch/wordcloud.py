@@ -21,7 +21,7 @@ class Wordcloud(commands.Cog):
         self.ws_url = os.getenv("WORDCLOUD_WS_URL")
         self.secret = os.getenv("WORDCLOUD_SECRET")
         self.ws = None
-        self.wordcloud_routine.start(self)
+        self.wordcloud_routine.start()
 
     @routines.routine(seconds=2)
     async def wordcloud_routine(self):

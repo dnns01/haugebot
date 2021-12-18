@@ -1,10 +1,9 @@
 import os
-import sqlite3
 from abc import ABC
 
 from dotenv import load_dotenv
-from twitchio.ext.commands import Context, Bot
 from twitchio import Channel, Message
+from twitchio.ext.commands import Context, Bot
 
 from vote_cog import VoteCog
 from wusstest_du_schon import WusstestDuSchon
@@ -39,9 +38,9 @@ class HaugeBot(Bot, ABC):
         print('Logged in')
 
         if wusstest_du_schon := self.cogs.get("WusstestDuSchon"):
-            wusstest_du_schon.loop.start(wusstest_du_schon)
+            wusstest_du_schon.loop.start()
         if vote_cog := self.cogs.get("VoteCog"):
-            vote_cog.manage_vote.start(vote_cog)
+            vote_cog.manage_vote.start()
 
     @staticmethod
     def get_percentage(part, total):
@@ -60,15 +59,15 @@ class HaugeBot(Bot, ABC):
     async def stream(self):
         return await self._http.get_streams(user_logins=[self.CHANNEL])
 
-    @staticmethod
-    def get_setting(key):
-        conn = sqlite3.connect("db.sqlite3")
-
-        c = conn.cursor()
-        c.execute('SELECT value from haugebot_web_setting where key = ?', (key,))
-        value = c.fetchone()[0]
-        conn.close()
-        return value
+    # @staticmethod
+    # def get_setting(key):
+    #     conn = sqlite3.connect("db.sqlite3")
+    #
+    #     c = conn.cursor()
+    #     c.execute('SELECT value from haugebot_web_setting where key = ?', (key,))
+    #     value = c.fetchone()[0]
+    #     conn.close()
+    #     return value
 
 
 load_dotenv()
