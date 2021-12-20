@@ -133,3 +133,17 @@ input:checked + .slider:before {
     -ms-transform: translateX(17.5px);
     transform: translateX(17.5px);
 }
+
+#permitted li .arrow, #not-permitted li .arrow {
+    color: var(--haugeblue);
+    display: none;
+}
+
+#permitted li:hover .arrow, #not-permitted li:hover .arrow {
+    color: var(--haugeblue);
+    display: inline;
+}
+
+#permitted li {
+    padding-left: 40px;
+}

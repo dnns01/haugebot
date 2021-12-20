@@ -1,0 +1,46 @@
+{% csrf_token %}
+<div class="w3-card w3-white">
+    <div>
+        <a href="{% url "wusstest_du_schon_new" %}" class="w3-button w3-haugepink w3-right w3-margin"><i
+                class="fas fa-plus"></i> Text hinzufügen</a>
+    </div>
+    <div class="w3-padding">
+        <table class="w3-table w3-striped">
+            <tbody>
+            <tr>
+                <th>Command</th>
+                <th>Text</th>
+                <th>Präfix</th>
+                <th>Aktiv</th>
+                <th></th>
+                <th></th>
+            </tr>
+            {% for loop_text in loop_texts %}
+                <tr>
+                    <td>{{ loop_text.command }}</td>
+                    <td>{{ loop_text.text }}</td>
+                    <td>
+                        <label class="switch">
+                            <input class="w3-switch" type="checkbox" {% if loop_text.use_prefix %}checked{% endif %}
+                                   onchange="wusstestDuSchonUsePrefix(this, '{{ loop_text.command }}'), 'prefix'">
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                    <td>
+                        <label class="switch">
+                            <input class="w3-switch" type="checkbox" {% if loop_text.active %}checked{% endif %}
+                                   onchange="wusstestDuSchonSetActive(this, '{{ loop_text.command }}'), 'active'">
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                    <td><a href="{% url "wusstest_du_schon" %}?active=texts"
+                           onclick="wusstestDuSchonRemove({{ loop_text.id }})"> <em
+                            class="fas fa-trash-alt"></em></a></td>
+                    <td><a href="{% url "wusstest_du_schon_edit" loop_text.id %}"><em
+                            class="fas fa-pencil-alt"></em></a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

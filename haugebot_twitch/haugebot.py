@@ -59,16 +59,6 @@ class HaugeBot(Bot, ABC):
     async def stream(self):
         return await self._http.get_streams(user_logins=[self.CHANNEL])
 
-    # @staticmethod
-    # def get_setting(key):
-    #     conn = sqlite3.connect("db.sqlite3")
-    #
-    #     c = conn.cursor()
-    #     c.execute('SELECT value from haugebot_web_setting where key = ?', (key,))
-    #     value = c.fetchone()[0]
-    #     conn.close()
-    #     return value
-
 
 load_dotenv()
 bot = HaugeBot()

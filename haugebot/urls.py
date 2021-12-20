@@ -27,7 +27,10 @@ urlpatterns = [
     path('logout/', views.logout, name="logout"),
     path('login/redirect/', views.login_redirect, name="login_redirect"),
     path('wusstest_du_schon/', views.wusstest_du_schon, name="wusstest_du_schon"),
-    path('wusstest_du_schon/remove/<int:id>', views.wusstest_du_schon_remove, name="wusstest_du_schon_remove"),
+    path('wusstest_du_schon/new/', views.wusstest_du_schon_new, name="wusstest_du_schon_new"),
+    path('wusstest_du_schon/edit/<int:text_id>', views.wusstest_du_schon_edit, name="wusstest_du_schon_edit"),
+    path('wusstest_du_schon/active', views.wusstest_du_schon_active, name="wusstest_du_schon_active"),
+    path('wusstest_du_schon/remove', views.wusstest_du_schon_remove, name="wusstest_du_schon_remove"),
     path('wordcloud/', views.wordcloud, name="wordcloud"),
     path('wordcloud/live/<str:id>', views.wordcloud_live, name="wordcloud_live")
 ]

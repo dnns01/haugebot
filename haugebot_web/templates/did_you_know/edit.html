@@ -1,0 +1,9 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {% include 'card_form.html' %}
+        <input type="submit" value="Add/Save" class="w3-button w3-haugepink w3-block">
+    </form>
+{% endblock %}

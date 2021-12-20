@@ -18,3 +18,39 @@ document.querySelectorAll(".tablink").forEach(value => {
 document.querySelectorAll(".color-select option").forEach(option => {
     option.setAttribute("style", "background: " + option.getAttribute("value") + ";");
 });
+
+function wusstestDuSchonSetActive(checkbox, id, field) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let payload = {
+        id: id,
+        field: field,
+        active: checkbox.checked
+    };
+
+    fetch('/wusstest_du_schon/active', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    }).then(response => response.json()).then(data => checkbox.checked = data.active);
+}
+
+function wusstestDuSchonRemove(id) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let payload = {
+        id: id
+    };
+
+    fetch('/wusstest_du_schon/remove', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    })
+}

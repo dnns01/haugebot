@@ -1,0 +1,20 @@
+<div class="w3-card w3-white w3-display-container">
+    <div class="w3-container w3-form-container">
+        {{ config_form.non_field_errors }}
+        {% for field in config_form %}
+            <p>
+                {{ field.errors }}
+                {% if field.widget_type == "checkbox" %}
+                    <label class="switch">
+                        {{ field }}
+                        <span class="slider"></span>
+                    </label>
+                    {{ field.label_tag }}
+                {% else %}
+                    {{ field.label_tag }}
+                    {{ field }}
+                {% endif %}
+            </p>
+        {% endfor %}
+    </div>
+</div>

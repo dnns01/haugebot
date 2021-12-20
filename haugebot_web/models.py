@@ -18,7 +18,7 @@ class TwitchColor(models.Model):
 
 
 class WusstestDuSchon(models.Model):
-    advertised_command = models.CharField(max_length=20)
+    command = models.CharField(max_length=20)
     text = models.TextField(max_length=450)
     use_prefix = models.BooleanField(default=True, verbose_name="Präfix verwenden")
     active = models.BooleanField(default=True, verbose_name="Aktiv")

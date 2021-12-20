@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="w3-row w3-display-container w3-bottombar">
+        <a href="#">
+            <div id="tablink_Konfiguration"
+                 class="w3-col s3 l3 m3 tablink w3-hover-haugepink w3-padding {% if "config" == active %}active{% endif %}">
+                Konfiguration
+            </div>
+        </a>
+        <a href="#">
+            <div id="tablink_Texte"
+                 class="w3-col s3 l3 m3 tablink w3-hover-haugepink w3-padding {% if "texts" == active %}active{% endif %}">
+                Texte
+            </div>
+        </a>
+    </div>
+
+    <div class="w3-container form" id="Konfiguration"
+         style="{% if "config" != active %}display:none; {% endif %}">
+        <form method="post">
+            <input type="hidden" id="id-active" value="config" name="form-active"/>
+            {% csrf_token %}
+            {% include "did_you_know/config.html" %}
+            <input type="submit" value="Add/Save" class="w3-button w3-haugepink w3-block">
+        </form>
+    </div>
+    <div class="w3-container form" id="Texte"
+         style="{% if "texts" != active %}display:none; {% endif %}">
+        {% csrf_token %}
+        {% include "did_you_know/list.html" %}
+    </div>
+{% endblock %}

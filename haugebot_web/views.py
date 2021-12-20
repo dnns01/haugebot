@@ -1,11 +1,13 @@
 import os
+import json
 
 import requests
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory, modelform_factory
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.http import Http404, JsonResponse, HttpResponse, HttpRequest
 
 from .forms import BaseForm
 from .models import WusstestDuSchon, Setting
@@ -17,54 +19,10 @@ def home(request):
 
 
 @login_required(login_url="/login")
-def wusstest_du_schon(request):
-    wusstest_du_schon_form_set = modelformset_factory(WusstestDuSchon, form=BaseForm,
-                                                  fields=('advertised_command', 'text', 'use_prefix', 'active'))
-    settings_form = modelform_factory(Setting, form=BaseForm,
-                                     fields=('wusstest_du_schon_prefix', 'wusstest_du_schon_loop'))
-    active = "config"
-    form = None
-
-    if request.method == "POST":
-        active = request.POST["form-active"]
-
-        if active == "config":
-            form = settings_form(request.POST, instance=Setting.objects.first())
-        elif active == "wusstestdu":
-            form = wusstest_du_schon_form_set(request.POST, request.FILES)
-
-        if form and form.is_valid():
-            form.save()
-
-    forms = {"Konfiguration": {
-        "display": "card",
-        'type': 'form',
-        'name': 'config',
-        'form': settings_form(instance=Setting.objects.first()),
-    },
-        "Texte": {
-            'display': 'card',
-            'type': 'formset',
-            'name': 'wusstestdu',
-            'formset': wusstest_du_schon_form_set(),
-            'remove_url': 'wusstest_du_schon_remove',
-        },
-    }
-
-    return render(request, "form.html", {'title': 'Wusstest du Schon?', 'forms': forms, 'active': active})
-
-
-@login_required(login_url="/login")
-def wusstest_du_schon_remove(request, id):
-    WusstestDuSchon.objects.filter(pk=id).delete()
-
-    return redirect("/wusstest_du_schon")
-
-
-#@login_required(login_url="/login")
 def wordcloud(request):
     id = os.getenv("DJANGO_WORDCLOUD_LIVE_ID")
-    embed_link = "" #f"{request.scheme}://{request.headers['Host']}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
+    host = os.getenv("DJANGO_ALLOWED_HOST1")
+    embed_link = f"{request.scheme}://{host}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
     return render(request, "wordcloud.html", {'title': 'Wordcloud', "ws_url": os.getenv("WORDCLOUD_WS_URL"),
                                               "session_key": request.session.session_key, "embed_link": embed_link})
 
@@ -117,3 +75,99 @@ def exchange_code(code):
                 'refresh_token': credentials['refresh_token']}
 
     return None
+
+
+# <editor-fold desc="Wusstest du Schon">
+@login_required(login_url="/login")
+def wusstest_du_schon(request: HttpRequest) -> HttpResponse:
+    settings_form = modelform_factory(Setting, form=BaseForm,
+                                      fields=('wusstest_du_schon_prefix', 'wusstest_du_schon_loop'))
+    loop_texts = WusstestDuSchon.objects.all()
+    active = "config"
+
+    if active_param := request.GET.get("active"):
+        active = active_param
+
+    if request.method == "POST":
+        active = request.POST["form-active"]
+
+        if active == "config":
+            form = settings_form(request.POST, instance=Setting.objects.first())
+            if form and form.is_valid():
+                form.save()
+
+    return render(request, "did_you_know/index.html", {'title': 'Wusstest du Schon?', 'active': active,
+                                                       "config_form": settings_form(instance=Setting.objects.first()),
+                                                       "loop_texts": loop_texts})
+
+
+@login_required(login_url="/login")
+def wusstest_du_schon_new(request: HttpRequest) -> HttpResponse:
+    wusstest_du_schon_form = modelform_factory(WusstestDuSchon, form=BaseForm,
+                                               fields=('command', 'text', 'use_prefix', 'active'))
+    if request.method == "POST":
+        form = wusstest_du_schon_form(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect("/wusstest_du_schon?active=texts")
+
+    form = wusstest_du_schon_form()
+
+    return render(request, "did_you_know/edit.html", {'title': 'Wusstest du Schon?', "form": {"form": form}})
+
+
+@login_required(login_url="/login")
+def wusstest_du_schon_edit(request: HttpRequest, text_id: int) -> HttpResponse:
+    text = get_object_or_404(WusstestDuSchon, pk=text_id)
+    wusstest_du_schon_form = modelform_factory(WusstestDuSchon, form=BaseForm,
+                                               fields=('command', 'text', 'use_prefix', 'active'))
+    if request.method == "POST":
+        form = wusstest_du_schon_form(request.POST, instance=text)
+
+        if form.is_valid():
+            form.save()
+            return redirect("/wusstest_du_schon?active=texts")
+
+    form = wusstest_du_schon_form(instance=text)
+
+    return render(request, "did_you_know/edit.html", {'title': 'Wusstest du Schon?', "form": {"form": form}})
+
+
+@login_required(login_url="/login")
+def wusstest_du_schon_active(request: HttpRequest) -> JsonResponse:
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body)
+            command = get_object_or_404(WusstestDuSchon, pk=payload["id"])
+            field_name = payload["field"]
+            if field_name == "prefix":
+                command.use_prefix = payload["active"]
+                field = command.use_prefix
+            elif field_name == "active":
+                command.active = payload["active"]
+                field = command.active
+            command.save()
+
+            return JsonResponse({"active": field})
+        except (json.decoder.JSONDecodeError, KeyError):
+            pass
+
+    raise Http404
+
+
+@login_required(login_url="/login")
+def wusstest_du_schon_remove(request):
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body)
+            command = get_object_or_404(WusstestDuSchon, pk=payload["id"])
+            command.delete()
+        except (json.decoder.JSONDecodeError, KeyError):
+            pass
+
+        return JsonResponse({})
+
+    raise Http404
+
+# </editor-fold>
