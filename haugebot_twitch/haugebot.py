@@ -8,6 +8,7 @@ from twitchio.ext.commands import Context, Bot
 from vote_cog import VoteCog
 from wusstest_du_schon import WusstestDuSchon
 from wordcloud import Wordcloud
+from whispers import Whispers
 
 
 class HaugeBot(Bot, ABC):
@@ -24,6 +25,7 @@ class HaugeBot(Bot, ABC):
         self.add_cog(VoteCog(self))
         self.add_cog(WusstestDuSchon(self))
         self.add_cog(Wordcloud(self))
+        self.add_cog(Whispers(self))
 
     @staticmethod
     async def send_me(ctx, content):

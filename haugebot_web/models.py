@@ -1,6 +1,7 @@
 import os
 
 from django.db import models
+from django.utils import timezone
 
 from haugebot_web import twitch_api
 from .managers import TwitchUserManager
@@ -62,3 +63,9 @@ class TwitchUser(models.Model):
             return twitch_api.is_mod(self, broadcaster)
         except TwitchUser.DoesNotExist:
             return False
+
+
+class Whisper(models.Model):
+    author = models.TextField(max_length=50)
+    content = models.TextField(max_length=500)
+    received_at = models.DateTimeField(default=timezone.now)
