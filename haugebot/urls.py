@@ -31,6 +31,7 @@ urlpatterns = [
     path('wusstest_du_schon/edit/<int:text_id>', views.wusstest_du_schon_edit, name="wusstest_du_schon_edit"),
     path('wusstest_du_schon/active', views.wusstest_du_schon_active, name="wusstest_du_schon_active"),
     path('wusstest_du_schon/remove', views.wusstest_du_schon_remove, name="wusstest_du_schon_remove"),
+    path('whispers', views.whispers, name="whispers"),
     path('wordcloud/', views.wordcloud, name="wordcloud"),
     path('wordcloud/live/<str:id>', views.wordcloud_live, name="wordcloud_live")
 ]

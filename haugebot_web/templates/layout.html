@@ -21,6 +21,8 @@
                 Schon?</a>
             <a href="{% url 'wordcloud' %}"
                class="w3-bar-item w3-button {% if title == "Wordcloud" %}w3-light-gray{% endif %}">Wordcloud</a>
+            <a href="{% url 'whispers' %}"
+               class="w3-bar-item w3-button {% if title == "Geflüster" %}w3-light-gray{% endif %}">Geflüster</a>
             <a href="{% url 'logout' %}" class="w3-bar-item w3-button">Logout</a>
         {% else %}
             <a href="{% url 'login' %}" class="w3-bar-item w3-button">Login</a>

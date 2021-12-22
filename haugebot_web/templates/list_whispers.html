@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+{% csrf_token %}
+<div class="w3-card w3-white">
+    <div class="w3-padding">
+        <table class="w3-table w3-striped">
+            <tbody>
+            <tr>
+                <th>Autor</th>
+                <th>Nachricht</th>
+                <th>Gesendet um</th>
+            </tr>
+            {% for whisper in whispers %}
+                <tr>
+                    <td>{{ whisper.author }}</td>
+                    <td>{{ whisper.content }}</td>
+                    <td>{{ whisper.received_at | date:"d.m.Y G:i:s"}}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

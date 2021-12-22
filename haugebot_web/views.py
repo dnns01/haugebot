@@ -4,13 +4,13 @@ import json
 import requests
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.contrib.auth.decorators import login_required
-from django.forms import modelformset_factory, modelform_factory
+from django.forms import modelform_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.http import Http404, JsonResponse, HttpResponse, HttpRequest
 
 from .forms import BaseForm
-from .models import WusstestDuSchon, Setting
+from .models import WusstestDuSchon, Setting, Whisper
 
 
 # Create your views here.
@@ -171,3 +171,9 @@ def wusstest_du_schon_remove(request):
     raise Http404
 
 # </editor-fold>
+
+@login_required(login_url="/login")
+def whispers(request):
+    whisper_messages = Whisper.objects.all().order_by("-received_at")
+
+    return render(request, "list_whispers.html", {'title': 'Geflüster', "whispers": whisper_messages})
