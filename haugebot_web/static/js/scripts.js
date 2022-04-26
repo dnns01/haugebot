@@ -52,5 +52,5 @@ function wusstestDuSchonRemove(id) {
         },
         credentials: 'same-origin',
         body: JSON.stringify(payload)
-    })
+    }).then(response => response.json()).then(data => location.assign("/wusstest_du_schon/?active=texts"));
 }
