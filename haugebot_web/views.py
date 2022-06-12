@@ -21,7 +21,7 @@ def home(request):
 @login_required(login_url="/login")
 def wordcloud(request):
     id = os.getenv("DJANGO_WORDCLOUD_LIVE_ID")
-    host = os.getenv("DJANGO_ALLOWED_HOST1")
+    host = os.getenv("DJANGO_ALLOWED_HOST2")
     embed_link = f"{request.scheme}://{host}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
     return render(request, "wordcloud.html", {'title': 'Wordcloud', "ws_url": os.getenv("WORDCLOUD_WS_URL"),
                                               "session_key": request.session.session_key, "embed_link": embed_link})

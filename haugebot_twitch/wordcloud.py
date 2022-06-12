@@ -57,8 +57,8 @@ class Wordcloud(commands.Cog):
             else:
                 self.running = False
         else:
-            # self.words[ctx.author.name] = phrase
-            self.words[phrase] = phrase
+            self.words[ctx.author.name] = phrase
+            # self.words[phrase] = phrase
 
     def sum_words(self):
         words = {}

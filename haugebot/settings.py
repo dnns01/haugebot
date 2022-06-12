@@ -31,6 +31,8 @@ DEBUG = os.getenv("DJANGO_DEBUG") == "True"
 
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOST1"), os.getenv("DJANGO_ALLOWED_HOST2"), "127.0.0.1"]
 
+CSRF_TRUSTED_ORIGINS = ["https://" + os.getenv("DJANGO_ALLOWED_HOST2")]
+
 AUTHENTICATION_BACKENDS = [
     'haugebot_web.auth.TwitchAuthenticationBackend',
 ]

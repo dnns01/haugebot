@@ -47,7 +47,7 @@ class VoteCog(commands.Cog):
         output += f'Endergebnis' if final_result else f'Zwischenergebnis'
         output += f' mit insgesamt {len(self.votes)} abgegebenen Stimmen'
 
-        await self.bot.send_me(message, output)
+        await self.bot.send_announce(message, output)
 
     def get_votes(self):
         """analyzes the votes-dict and counts the votes"""

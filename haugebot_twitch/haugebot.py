@@ -28,6 +28,15 @@ class HaugeBot(Bot, ABC):
         self.add_cog(Whispers(self))
 
     @staticmethod
+    async def send_announce(ctx, content):
+        """ Change Text color to color and send content as message """
+
+        if type(ctx) is Context or type(ctx) is Channel:
+            await ctx.send(f".announce {content}")
+        elif type(ctx) is Message:
+            await ctx.channel.send(f".announce {content}")
+
+    @staticmethod
     async def send_me(ctx, content):
         """ Change Text color to color and send content as message """
 

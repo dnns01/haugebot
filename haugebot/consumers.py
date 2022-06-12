@@ -4,6 +4,9 @@ import os
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from wordcloud import WordCloud
+from dotenv import load_dotenv
+
+load_dotenv()
 
 secret = os.getenv("WORDCLOUD_SECRET")
 words = {}
