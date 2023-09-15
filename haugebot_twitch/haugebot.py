@@ -32,9 +32,9 @@ class HaugeBot(Bot, ABC):
         """ Change Text color to color and send content as message """
 
         if type(ctx) is Context or type(ctx) is Channel:
-            await ctx.send(f".announce {content}")
+            await ctx.send(f"{content}")
         elif type(ctx) is Message:
-            await ctx.channel.send(f".announce {content}")
+            await ctx.channel.send(f"{content}")
 
     @staticmethod
     async def send_me(ctx, content):

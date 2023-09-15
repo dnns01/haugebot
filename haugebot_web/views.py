@@ -140,13 +140,8 @@ def wusstest_du_schon_active(request: HttpRequest) -> JsonResponse:
         try:
             payload = json.loads(request.body)
             command = get_object_or_404(WusstestDuSchon, pk=payload["id"])
-            field_name = payload["field"]
-            if field_name == "prefix":
-                command.use_prefix = payload["active"]
-                field = command.use_prefix
-            elif field_name == "active":
-                command.active = payload["active"]
-                field = command.active
+            command.active = payload["active"]
+            field = command.active
             command.save()
 
             return JsonResponse({"active": field})
@@ -155,6 +150,21 @@ def wusstest_du_schon_active(request: HttpRequest) -> JsonResponse:
 
     raise Http404
 
+@login_required(login_url="/login")
+def wusstest_du_schon_prefix(request: HttpRequest) -> JsonResponse:
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body)
+            command = get_object_or_404(WusstestDuSchon, pk=payload["id"])
+            command.use_prefix = payload["active"]
+            field = command.use_prefix
+            command.save()
+
+            return JsonResponse({"active": field})
+        except (json.decoder.JSONDecodeError, KeyError):
+            pass
+
+    raise Http404
 
 @login_required(login_url="/login")
 def wusstest_du_schon_remove(request):

@@ -29,6 +29,7 @@ urlpatterns = [
     path('wusstest_du_schon/', views.wusstest_du_schon, name="wusstest_du_schon"),
     path('wusstest_du_schon/new/', views.wusstest_du_schon_new, name="wusstest_du_schon_new"),
     path('wusstest_du_schon/edit/<int:text_id>', views.wusstest_du_schon_edit, name="wusstest_du_schon_edit"),
+    path('wusstest_du_schon/prefix', views.wusstest_du_schon_prefix, name="wusstest_du_schon_prefix"),
     path('wusstest_du_schon/active', views.wusstest_du_schon_active, name="wusstest_du_schon_active"),
     path('wusstest_du_schon/remove', views.wusstest_du_schon_remove, name="wusstest_du_schon_remove"),
     path('whispers', views.whispers, name="whispers"),
