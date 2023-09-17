@@ -141,10 +141,9 @@ def wusstest_du_schon_active(request: HttpRequest) -> JsonResponse:
             payload = json.loads(request.body)
             command = get_object_or_404(WusstestDuSchon, pk=payload["id"])
             command.active = payload["active"]
-            field = command.active
             command.save()
 
-            return JsonResponse({"active": field})
+            return JsonResponse({"active": command.active})
         except (json.decoder.JSONDecodeError, KeyError):
             pass
 
@@ -157,10 +156,9 @@ def wusstest_du_schon_prefix(request: HttpRequest) -> JsonResponse:
             payload = json.loads(request.body)
             command = get_object_or_404(WusstestDuSchon, pk=payload["id"])
             command.use_prefix = payload["active"]
-            field = command.use_prefix
             command.save()
 
-            return JsonResponse({"active": field})
+            return JsonResponse({"active": command.use_prefix})
         except (json.decoder.JSONDecodeError, KeyError):
             pass
 
