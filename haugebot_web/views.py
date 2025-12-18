@@ -1,16 +1,17 @@
-import os
+import datetime
 import json
+import os
 
 import requests
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.contrib.auth.decorators import login_required
-from django.forms import modelform_factory
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
+from django.forms import modelform_factory, DateTimeInput, modelformset_factory
 from django.http import Http404, JsonResponse, HttpResponse, HttpRequest
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
 from .forms import BaseForm
-from .models import WusstestDuSchon, Setting, Whisper
+from .models import WusstestDuSchon, Setting, Whisper, Timer, TimerText
 
 
 # Create your views here.
@@ -18,22 +19,22 @@ def home(request):
     return render(request, "home.html", {'title': 'HaugeBot'})
 
 
-@login_required(login_url="/login")
-def wordcloud(request):
-    id = os.getenv("DJANGO_WORDCLOUD_LIVE_ID")
-    host = os.getenv("DJANGO_ALLOWED_HOST2")
-    embed_link = f"{request.scheme}://{host}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
-    return render(request, "wordcloud.html", {'title': 'Wordcloud', "ws_url": os.getenv("WORDCLOUD_WS_URL"),
-                                              "session_key": request.session.session_key, "embed_link": embed_link})
-
-
-def wordcloud_live(request, id):
-    if id == os.getenv("DJANGO_WORDCLOUD_LIVE_ID"):
-        return render(request, "live-wordcloud.html", {"ws_url": os.getenv("WORDCLOUD_WS_URL")})
+# @login_required(login_url="/login")
+# def wordcloud(request):
+#     id = os.getenv("DJANGO_WORDCLOUD_LIVE_ID")
+#     host = os.getenv("DJANGO_ALLOWED_HOST2")
+#     embed_link = f"{request.scheme}://{host}{reverse('wordcloud_live', args=(id,))}" if request.user.is_broadcaster else ""
+#     return render(request, "wordcloud.html", {'title': 'Wordcloud', "ws_url": os.getenv("WORDCLOUD_WS_URL"),
+#                                               "session_key": request.session.session_key, "embed_link": embed_link})
+#
+#
+# def wordcloud_live(request, id):
+#     if id == os.getenv("DJANGO_WORDCLOUD_LIVE_ID"):
+#         return render(request, "live-wordcloud.html", {"ws_url": os.getenv("WORDCLOUD_WS_URL")})
 
 
 def login(request):
-    client_id = os.getenv("CLIENT_ID")
+    client_id = os.getenv("DJANGO_CLIENT_ID")
     redirect_uri = os.getenv("REDIRECT_URI")
     url = f"https://id.twitch.tv/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=moderation:read"
     return redirect(url)
@@ -56,8 +57,8 @@ def login_redirect(request):
 
 
 def exchange_code(code):
-    client_id = os.getenv("CLIENT_ID")
-    client_secret = os.getenv("CLIENT_SECRET")
+    client_id = os.getenv("DJANGO_CLIENT_ID")
+    client_secret = os.getenv("DJANGO_CLIENT_SECRET")
     redirect_uri = os.getenv("REDIRECT_URI")
     url = f"https://id.twitch.tv/oauth2/token?client_id={client_id}&client_secret={client_secret}&code={code}&grant_type=authorization_code&redirect_uri={redirect_uri}"
     response = requests.post(url)
@@ -149,6 +150,7 @@ def wusstest_du_schon_active(request: HttpRequest) -> JsonResponse:
 
     raise Http404
 
+
 @login_required(login_url="/login")
 def wusstest_du_schon_prefix(request: HttpRequest) -> JsonResponse:
     if request.method == "POST":
@@ -164,6 +166,7 @@ def wusstest_du_schon_prefix(request: HttpRequest) -> JsonResponse:
 
     raise Http404
 
+
 @login_required(login_url="/login")
 def wusstest_du_schon_remove(request):
     if request.method == "POST":
@@ -177,6 +180,172 @@ def wusstest_du_schon_remove(request):
         return JsonResponse({})
 
     raise Http404
+
+
+# </editor-fold>
+
+
+# <editor-fold desc="Timer">
+@login_required(login_url="/login")
+def timer(request: HttpRequest) -> HttpResponse:
+    timers = Timer.objects.all()
+
+    return render(request, "timer/index.html", {'title': 'Timer', 'timers': timers})
+
+
+@login_required(login_url="/login")
+def timer_new(request: HttpRequest) -> HttpResponse:
+    timer_form = modelform_factory(Timer, form=BaseForm,
+                                   fields=('name', 'interval', 'next_time', 'announce', 'active'),
+                                   widgets={'next_time': DateTimeInput(attrs={'type': 'datetime-local'}), }
+                                   )
+    timer_formset = modelformset_factory(TimerText, form=BaseForm, fields=('text',))
+    if request.method == "POST":
+        form = timer_form(request.POST)
+        formset = timer_formset(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            timer = form.save()
+            timer_texts = formset.save(commit=False)
+
+            for text in timer_texts:
+                text.timer = timer
+                text.save()
+            return redirect("timer_edit", timer_id=timer.id)
+
+    form = timer_form()
+    formset = timer_formset(queryset=TimerText.objects.none())
+
+    return render(request, "timer/edit.html", {'title': 'Timer', "form": {"form": form, 'formset': formset}})
+
+
+@login_required(login_url="/login")
+def timer_edit(request: HttpRequest, timer_id: int) -> HttpResponse:
+    timer = get_object_or_404(Timer, pk=timer_id)
+    timer_form = modelform_factory(Timer, form=BaseForm,
+                                   fields=('name', 'interval', 'next_time', 'announce', 'active'),
+                                   widgets={'next_time': DateTimeInput(attrs={'type': 'datetime-local'}), }
+                                   )
+    timer_formset = modelformset_factory(TimerText, form=BaseForm, fields=('text',))
+
+    if request.method == "POST":
+        form = timer_form(request.POST, instance=timer)
+        formset = timer_formset(request.POST, queryset=timer.timertext_set.all())
+
+        if form.is_valid() and formset.is_valid():
+            timer = form.save()
+            timer_texts = formset.save(commit=False)
+
+            for text in timer_texts:
+                text.timer = timer
+                text.save()
+            return redirect("timer_edit", timer_id=timer_id)
+
+    form = timer_form(instance=timer)
+    formset = timer_formset(queryset=timer.timertext_set.all())
+
+    return render(request, "timer/edit.html", {'title': 'Timer', "form": {"form": form, 'formset': formset}})
+
+
+@login_required(login_url="/login")
+def timer_active(request: HttpRequest) -> JsonResponse:
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body)
+            timer = get_object_or_404(Timer, pk=payload["id"])
+            timer.active = payload["active"]
+            timer.save()
+
+            return JsonResponse({"active": timer.active})
+        except (json.decoder.JSONDecodeError, KeyError):
+            pass
+
+    raise Http404
+
+
+@login_required(login_url="/login")
+def timer_announce(request: HttpRequest) -> JsonResponse:
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body)
+            command = get_object_or_404(Timer, pk=payload["id"])
+            command.announce = payload["active"]
+            command.save()
+
+            return JsonResponse({"active": command.announce})
+        except (json.decoder.JSONDecodeError, KeyError):
+            pass
+
+    raise Http404
+
+
+@login_required(login_url="/login")
+def timer_remove(request):
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body)
+            command = get_object_or_404(Timer, pk=payload["id"])
+            command.delete()
+        except (json.decoder.JSONDecodeError, KeyError):
+            pass
+
+        return JsonResponse({})
+
+    raise Http404
+
+
+def api_timers_get(request: HttpRequest) -> JsonResponse:
+    if request.method == "GET" and request.headers.get("secret") == os.getenv("DJANGO_API_SECRET"):
+        timers = []
+        for timer in Timer.objects.all():
+            texts = [text.text for text in timer.timertext_set.all()]
+            timers.append({
+                "id": timer.id,
+                "name": timer.name,
+                "interval": timer.interval,
+                "next_time": timer.next_time,
+                "announce": timer.announce,
+                "active": timer.active,
+                "texts": texts
+            })
+
+        return JsonResponse({"timers": timers})
+
+    return JsonResponse(
+        {"detail": "Authentication required"},
+        status=401
+    )
+
+
+@csrf_exempt
+def api_timers_update(request: HttpRequest, timer_id: int) -> JsonResponse:
+    if request.method == "POST" and request.headers.get("secret") == os.getenv("DJANGO_API_SECRET"):
+        timer = get_object_or_404(Timer, pk=timer_id)
+
+        try:
+            data = json.loads(request.body)
+            timer.next_time = datetime.datetime.fromisoformat(data["next_time"])
+            timer.save()
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        texts = [text.text for text in timer.timertext_set.all()]
+        return JsonResponse(
+            {
+                "id": timer.id,
+                "name": timer.name,
+                "interval": timer.interval,
+                "next_time": timer.next_time,
+                "announce": timer.announce,
+                "active": timer.active,
+                "texts": texts
+            })
+
+    return JsonResponse(
+        {"detail": "Authentication required"},
+        status=401
+    )
+
 
 # </editor-fold>
 

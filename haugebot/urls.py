@@ -13,10 +13,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import path
 
 from haugebot_web import views
 
@@ -33,8 +33,14 @@ urlpatterns = [
     path('wusstest_du_schon/active', views.wusstest_du_schon_active, name="wusstest_du_schon_active"),
     path('wusstest_du_schon/remove', views.wusstest_du_schon_remove, name="wusstest_du_schon_remove"),
     path('whispers', views.whispers, name="whispers"),
-    path('wordcloud/', views.wordcloud, name="wordcloud"),
-    path('wordcloud/live/<str:id>', views.wordcloud_live, name="wordcloud_live")
+    path('timer/', views.timer, name="timer"),
+    path('timer/new/', views.timer_new, name="timer_new"),
+    path('timer/edit/<int:timer_id>', views.timer_edit, name="timer_edit"),
+    path('timer/announce', views.timer_announce, name="timer_announce"),
+    path('timer/active', views.timer_active, name="timer_active"),
+    path('timer/remove', views.timer_remove, name="timer_remove"),
+    path('api/get_timers', views.api_timers_get, name="api_timers_get"),
+    path('api/update_timers/<int:timer_id>', views.api_timers_update, name="api_timers_update"),
 ]
 
 if settings.DEBUG:

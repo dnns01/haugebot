@@ -1,0 +1,62 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="w3-container form" id="Texte">
+        {% csrf_token %}
+        <div class="w3-card w3-white">
+            <div>
+                <a href="{% url "timer_new" %}" class="w3-button w3-haugepink w3-right w3-margin"><i
+                        class="fas fa-plus"></i> Timer hinzufügen</a>
+            </div>
+            <div class="w3-padding">
+                <table class="w3-table w3-striped">
+                    <tbody>
+                    <tr>
+                        <th>Name</th>
+                        <th>Texte</th>
+                        <th>Intervall (in min)</th>
+                        <th>Nächste Ausführung</th>
+                        <th class="fit">Announcement</th>
+                        <th class="fit">Aktiv</th>
+                        <th class="fit"></th>
+                        <th class="fit"></th>
+                    </tr>
+                    {% for timer in timers %}
+                        <tr>
+                            <td>{{ timer.name }}</td>
+                            <td>
+                                <ul>{% for text in timer.timertext_set.all %}
+                                    <li>{{ text.text }}</li>
+                                {% endfor %}
+                                </ul>
+                            </td>
+                            <td>{{ timer.interval }}</td>
+                            <td>{{ timer.next_time|date:"d.m.Y H:i" }}</td>
+                            <td class="fit">
+                                <label class="switch">
+                                    <input class="w3-switch" type="checkbox"
+                                           {% if timer.announce %}checked{% endif %}
+                                           onchange="timerAnnounce(this, '{{ timer.id }}')">
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td class="fit">
+                                <label class="switch">
+                                    <input class="w3-switch" type="checkbox" {% if timer.active %}checked{% endif %}
+                                           onchange="timerSetActive(this, '{{ timer.id }}')">
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td class="fit"><a href="#" onclick="timerRemove({{ timer.id }})"> <em
+                                    class="fas fa-trash-alt"></em></a></td>
+                            <td class="fit"><a href="{% url "timer_edit" timer.id %}"><em
+                                    class="fas fa-pencil-alt"></em></a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

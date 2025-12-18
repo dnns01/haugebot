@@ -1,11 +1,13 @@
 import os
 from datetime import datetime, timedelta
 
-import vote_redis
-from twitchio.ext import commands, routines
+from twitchio import ChatMessage
+from twitchio.ext import commands
+
+from haugebot_twitch import vote_redis
 
 
-class VoteCog(commands.Cog):
+class Vote(commands.Component):
     def __init__(self, bot):
         self.bot = bot
         self.DELAY_END = int(os.getenv("VOTE_DELAY_END"))
@@ -20,22 +22,30 @@ class VoteCog(commands.Cog):
         self.votes = {}
         self.redis = vote_redis.VoteRedis()
 
-    @routines.routine(seconds=1)
+    # @routines.routine()
     async def manage_vote(self):
         if len(self.votes) > 0:
             if datetime.now() >= self.vote_end:
-                await self.notify_vote_result(self.bot.channel(), final_result=True)
+                await self.notify_vote_result(final_result=True)
                 self.votes.clear()
                 self.update_redis()
                 self.vote_blocked = datetime.now() + timedelta(seconds=self.DELAY_INTERIM)
                 return
             if datetime.now() >= self.next_interim:
-                await self.notify_vote_result(self.bot.channel())
+                await self.notify_vote_result()
                 self.next_interim = self.calc_next_interim()
         if self.vote_blocked and datetime.now() >= self.vote_blocked:
             self.vote_blocked = None
 
-    async def notify_vote_result(self, message, final_result=False):
+    @staticmethod
+    def get_percentage(part, total):
+        """ Calculate percentage """
+        if total != 0:
+            return round(part / total * 100, 1)
+
+        return 0
+
+    async def notify_vote_result(self, final_result: bool = False):
         if len(self.votes) < self.MIN_VOTES:
             return
 
@@ -47,7 +57,7 @@ class VoteCog(commands.Cog):
         output += f'Endergebnis' if final_result else f'Zwischenergebnis'
         output += f' mit insgesamt {len(self.votes)} abgegebenen Stimmen'
 
-        await self.bot.send_announce(message, output)
+        await self.bot.send(output)
 
     def get_votes(self):
         """analyzes the votes-dict and counts the votes"""
@@ -64,12 +74,16 @@ class VoteCog(commands.Cog):
             elif x == 'minus':
                 minus += 1
 
-        return [[plus, self.bot.get_percentage(plus, len(self.votes))],
-                [neutral, self.bot.get_percentage(neutral, len(self.votes))],
-                [minus, self.bot.get_percentage(minus, len(self.votes))]]
+        return [[plus, self.get_percentage(plus, len(self.votes))],
+                [neutral, self.get_percentage(neutral, len(self.votes))],
+                [minus, self.get_percentage(minus, len(self.votes))]]
 
-    @commands.Cog.event()
-    async def event_message(self, message):
+    @commands.Component.listener()
+    async def event_message(self, message: ChatMessage):
+        # await self.bot.send(message.text)
+        # await self.bot.send_announcement(message.text)
+        #
+        return
         # make sure the bot ignores itself and nightbot
         if not message.author or message.author.name.lower() in [self.bot.NICK.lower(), 'nightbot']:
             return
@@ -118,3 +132,12 @@ class VoteCog(commands.Cog):
             p.set('neutral', votes[1][0])
             p.set('minus', votes[2][0])
             p.execute()  # transaction end
+
+
+# This is our entry point for the module.
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_component(Vote(bot))
+
+# This is an optional teardown coroutine for miscellaneous clean-up if necessary.
+# async def teardown(bot: commands.Bot) -> None:
+#     ...

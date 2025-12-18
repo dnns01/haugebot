@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Setting, TwitchColor
+from .models import Setting
 
 
 class BaseForm(forms.ModelForm):

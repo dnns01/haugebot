@@ -71,3 +71,56 @@ function wusstestDuSchonRemove(id) {
         body: JSON.stringify(payload)
     }).then(response => response.json()).then(data => location.assign("/wusstest_du_schon/?active=texts"));
 }
+
+function timerAnnounce(checkbox, id) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let payload = {
+        id: id,
+        active: checkbox.checked
+    };
+
+    fetch('/timer/announce', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    }).then(response => response.json()).then(data => checkbox.checked = data.active);
+}
+
+function timerSetActive(checkbox, id) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let payload = {
+        id: id,
+        active: checkbox.checked
+    };
+
+    fetch('/timer/active', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    }).then(response => response.json()).then(data => checkbox.checked = data.active);
+}
+
+function timerRemove(id) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let payload = {
+        id: id
+    };
+
+    fetch('/timer/remove', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    }).then(response => response.json()).then(data => location.assign("/timer/"));
+}

@@ -147,3 +147,8 @@ input:checked + .slider:before {
 #permitted li {
     padding-left: 40px;
 }
+
+td.fit,
+th.fit {
+    width: 1%;
+}

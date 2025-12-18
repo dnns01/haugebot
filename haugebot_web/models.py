@@ -12,21 +12,11 @@ class Setting(models.Model):
     wusstest_du_schon_loop = models.PositiveIntegerField(verbose_name="Pause (in Minuten)")
 
 
-class TwitchColor(models.Model):
-    twitch_name = models.CharField(max_length=20)
-    display_name = models.CharField(max_length=20)
-    color = models.CharField(max_length=7)
-
-
 class WusstestDuSchon(models.Model):
     command = models.CharField(max_length=20)
     text = models.TextField(max_length=450)
     use_prefix = models.BooleanField(default=True, verbose_name="Präfix verwenden")
     active = models.BooleanField(default=True, verbose_name="Aktiv")
-
-
-class Pipimeter(models.Model):
-    user = models.CharField(max_length=25, unique=True)
 
 
 class TwitchUser(models.Model):
@@ -69,3 +59,22 @@ class Whisper(models.Model):
     author = models.TextField(max_length=50)
     content = models.TextField(max_length=500)
     received_at = models.DateTimeField(default=timezone.now)
+
+
+class Timer(models.Model):
+    name = models.CharField(max_length=100)
+    interval = models.PositiveIntegerField(default=30)
+    next_time = models.DateTimeField(default=timezone.now)
+    announce = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if self.next_time:
+            self.next_time = self.next_time.replace(second=0, microsecond=0)
+        # self.announce = False
+        super().save(*args, **kwargs)
+
+
+class TimerText(models.Model):
+    timer = models.ForeignKey(Timer, on_delete=models.CASCADE)
+    text = models.TextField(max_length=500)
